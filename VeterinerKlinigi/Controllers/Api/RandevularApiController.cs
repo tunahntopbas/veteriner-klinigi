@@ -59,6 +59,7 @@ public class RandevularApiController : ControllerBase
     [HttpPost]
     [ProducesResponseType<RandevuDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<HataDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<HataDto>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<RandevuDto>> Olustur([FromBody] RandevuOlusturDto girdi)
     {
@@ -67,6 +68,8 @@ public class RandevularApiController : ControllerBase
         var sonuc = await _randevular.OlusturAsync(
             new RandevuTalebi(girdi.EvcilHayvanId, girdi.HizmetId, girdi.VeterinerId, girdi.Baslangic, girdi.SahipNotu), kb);
 
+        if (sonuc.Bulunamadi)
+            return NotFound(new HataDto(sonuc.Hata!));       // 404 — başkasının / olmayan hayvan
         if (!sonuc.Basarili)
             return BadRequest(new HataDto(sonuc.Hata!));     // 400 — ör. "Hekim 10:00–10:30 arası başka randevuda"
 

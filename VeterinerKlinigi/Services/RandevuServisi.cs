@@ -72,7 +72,8 @@ public class RandevuServisi : IRandevuServisi
         var hayvanBenim = await _db.EvcilHayvanlar
             .AnyAsync(h => h.Id == talep.EvcilHayvanId && (kb.AdminMi || h.SahipId == kb.Id));
         if (!hayvanBenim)
-            return IslemSonucu<Randevu>.Basarisiz("Seçilen hayvan bulunamadı.");
+            // Bulunamadi → REST API 404 döner (başkasının hayvanının id'si denenirse "yok" gibi davranılır).
+            return new IslemSonucu<Randevu> { Bulunamadi = true, Hata = "Seçilen hayvan bulunamadı." };
 
         // Saniye/salise kırp: 10:30:27 değil 10:30.
         var baslangic = SaniyesizYap(talep.Baslangic);
@@ -84,7 +85,7 @@ public class RandevuServisi : IRandevuServisi
         // Aynı hekime gelen ikinci istek, birinci bitene kadar kilitte bekler; sonra
         // kontrol ettiğinde dolu saati görür ve "çakışıyor" cevabı alır.
         await using var islem = await _db.Database.BeginTransactionAsync();
-        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({talep.VeterinerId})");
+        await KilitleriAlAsync(talep.VeterinerId, talep.EvcilHayvanId);
 
         // ÖDEV 4.2 — Uygun değilse sistem UYARIR (nedenini söyler).
         var uygunluk = await _musaitlik.RandevuUygunMuAsync(
@@ -134,7 +135,7 @@ public class RandevuServisi : IRandevuServisi
         var baslangic = SaniyesizYap(talep.Baslangic);
 
         await using var islem = await _db.Database.BeginTransactionAsync();
-        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({talep.VeterinerId})");
+        await KilitleriAlAsync(talep.VeterinerId, talep.EvcilHayvanId);
 
         // Kendisiyle çakışmasın diye haricRandevuId = id
         var uygunluk = await _musaitlik.RandevuUygunMuAsync(
@@ -188,6 +189,17 @@ public class RandevuServisi : IRandevuServisi
         if (!GecisGecerliMi(randevu.Durum, yeniDurum))
             return IslemSonucu.Basarisiz(
                 $"'{DurumAdi(randevu.Durum)}' durumundaki randevu '{DurumAdi(yeniDurum)}' yapılamaz.");
+
+        // ÖDEV 3.4 — Muayene notu "tamamlanan" randevuya girilir. Henüz saati gelmemiş bir randevu
+        // tamamlanmış sayılamaz; aksi hâlde yarınki randevuya bugünden not yazılır ve ciroya girerdi.
+        // DİKKAT: "Şimdi" = sunucunun yerel saati (klinik saati, Europe/Istanbul kabul edilir).
+        var simdi = DateTime.Now;
+        if (yeniDurum == RandevuDurumu.Tamamlandi && randevu.BaslangicZamani > simdi)
+            return IslemSonucu.Basarisiz("Henüz saati gelmemiş randevu tamamlanamaz.");
+
+        // ÖDEV 4.4 — Saati geçmiş bir talep artık onaylanamaz (o saat geçti); yalnızca reddedilebilir.
+        if (yeniDurum == RandevuDurumu.Onaylandi && randevu.BaslangicZamani <= simdi)
+            return IslemSonucu.Basarisiz("Saati geçmiş randevu onaylanamaz; reddedebilirsiniz.");
 
         randevu.Durum = yeniDurum;
         if (yeniDurum == RandevuDurumu.Reddedildi)
@@ -258,6 +270,23 @@ public class RandevuServisi : IRandevuServisi
 
     // ---------------------------------------------------------------
     // Yardımcılar
+    // ---------------------------------------------------------------
+
+    /// <summary>
+    /// Transaction içinde iki PostgreSQL "advisory" kilidi alır (transaction bitince kendiliğinden bırakılır):
+    ///   (0, veterinerId)   → aynı HEKİME eşzamanlı iki randevu sıraya girer (hekim çakışması).
+    ///   (1, evcilHayvanId) → aynı HAYVANA farklı hekimlerden eşzamanlı iki randevu da sıraya girer
+    ///                        (hayvan aynı anda iki yerde olamaz kuralı).
+    /// İki anahtarlı form kullanıyoruz ki "hekim 3" ile "hayvan 3" aynı kilit sayılmasın:
+    /// ilk sayı kilidin TÜRÜ, ikinci sayı kaydın id'si.
+    /// Kilitler her zaman aynı sırayla (önce hekim, sonra hayvan) alındığı için kilitlenme (deadlock) olmaz.
+    /// </summary>
+    private async Task KilitleriAlAsync(int veterinerId, int evcilHayvanId)
+    {
+        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(0, {veterinerId})");
+        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(1, {evcilHayvanId})");
+    }
+
     // ---------------------------------------------------------------
 
     /// <summary>Durum makinesi: hangi durumdan hangisine geçilebilir? (Models/RandevuDurumu.cs)</summary>
