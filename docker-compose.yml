@@ -1,0 +1,31 @@
+# ------------------------------------------------------------------
+# PostgreSQL veritabanını Docker içinde çalıştırır.
+#
+# Kullanım:
+#   docker compose up -d     → veritabanını arka planda başlatır
+#   docker compose down      → durdurur (veriler volume'da kalır)
+#   docker compose down -v   → durdurur ve TÜM veriyi siler (sıfırdan başlamak için)
+#
+# Neden Docker? Mac'e PostgreSQL kurmadan, her bilgisayarda aynı sürümü
+# (postgres:17) tek komutla ayağa kaldırabilmek için.
+#
+# DİKKAT: Kullanıcı adı ve parola bu dosyada YAZMAZ; kök klasördeki .env
+# dosyasından okunur. .env depoya girmez (.gitignore), örneği .env.example'da.
+# ÖDEV GitHub-Gizlilik — bağlantı dizesi parolaları depoya konmamalı.
+# ------------------------------------------------------------------
+services:
+  veritabani:
+    image: postgres:17-alpine   # alpine = küçük boyutlu imaj, aynı PostgreSQL 17
+    container_name: veteriner-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"   # bilgisayarın 5432 portu → konteynerin 5432 portu
+    volumes:
+      - veteriner-veri:/var/lib/postgresql/data   # veriler konteyner silinse de kalır
+
+volumes:
+  veteriner-veri:
