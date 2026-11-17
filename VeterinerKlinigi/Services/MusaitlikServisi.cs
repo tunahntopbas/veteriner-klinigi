@@ -31,8 +31,11 @@ public class MusaitlikServisi : IMusaitlikServisi
     // Boş saat listesi 15 dakikalık adımlarla üretilir: 09:00, 09:15, 09:30 ...
     private const int AdimDakika = 15;
 
-    // Çakışmaya SAYILAN durumlar. Reddedilen ve iptal edilen randevu saati boşaltır.
-    private static readonly RandevuDurumu[] DoluSayilanDurumlar = [RandevuDurumu.Bekliyor, RandevuDurumu.Onaylandi];
+    // Çakışmaya SAYILAN durumlar: Bekliyor, Onaylandı ve Tamamlandı.
+    // Tamamlanan randevu da o saati kullanmıştır (hekim muayeneyi erken bitirip işaretlemiş olabilir).
+    // Reddedilen ve iptal edilen randevu ise saati BOŞALTIR.
+    private static readonly RandevuDurumu[] DoluSayilanDurumlar =
+        [RandevuDurumu.Bekliyor, RandevuDurumu.Onaylandi, RandevuDurumu.Tamamlandi];
 
     private readonly UygulamaDbContext _db;
 
