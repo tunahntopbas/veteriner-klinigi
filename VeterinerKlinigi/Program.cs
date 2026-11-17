@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VeterinerKlinigi.Data;
+using VeterinerKlinigi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ---------------------------------------------------------------
 builder.Services.AddControllersWithViews();
 
-// Veritabanı: PostgreSQL + EF Core.
+// ---- Veritabanı: PostgreSQL + EF Core ----
 // Bağlantı dizesi appsettings.json'da DEĞİL, "user-secrets" içinde durur
 // (parola depoya girmesin diye). Ayar adı: ConnectionStrings:VarsayilanBaglanti
 // ÖDEV GitHub-Gizlilik — bağlantı dizesi parolaları depoya konmamalı.
@@ -16,9 +18,60 @@ var baglantiDizesi = builder.Configuration.GetConnectionString("VarsayilanBaglan
     ?? throw new InvalidOperationException(
         "Bağlantı dizesi bulunamadı. README'deki 'dotnet user-secrets set' adımını yapın.");
 
+// AddDbContext → DbContext'i SCOPED kaydeder: her HTTP isteği kendi DbContext'ini alır.
 builder.Services.AddDbContext<UygulamaDbContext>(options => options.UseNpgsql(baglantiDizesi));
 
+// ---- Kimlik (ASP.NET Core Identity) ----
+// ÖDEV Beklenen-Roller — Kullanici + IdentityRole: tek kullanıcı tablosu, rollerle ayrım.
+builder.Services
+    .AddIdentity<Kullanici, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;               // aynı e-postayla iki hesap olmaz
+        options.SignIn.RequireConfirmedAccount = false;        // e-posta onayı yok (mail sunucusu yok)
+        options.Lockout.MaxFailedAccessAttempts = 5;           // 5 hatalı denemede kilit
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        // Parola kuralları Identity'nin varsayılanı: en az 6 karakter, büyük/küçük harf, rakam, sembol.
+    })
+    .AddEntityFrameworkStores<UygulamaDbContext>()   // kullanıcılar bizim DbContext'te (PostgreSQL)
+    .AddDefaultTokenProviders();
+
+// Giriş çerezi (cookie) ayarları.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Hesap/Giris";                 // giriş yapmamış → buraya
+    options.AccessDeniedPath = "/Hesap/ErisimEngellendi"; // rolü yetmiyor → buraya
+    options.ReturnUrlParameter = "donusAdresi";
+    options.Cookie.HttpOnly = true;                      // JavaScript çerezi okuyamaz (XSS'e karşı)
+    options.Cookie.SameSite = SameSiteMode.Lax;          // başka sitelerden gelen POST'larda çerez gitmez (CSRF'e karşı)
+    options.SlidingExpiration = true;
+
+    // DİKKAT: REST API'ye giriş yapmadan istek gelirse HTML giriş sayfasına
+    // YÖNLENDİRME (302) yapma; doğru durum kodunu dön: 401 / 403.
+    // ÖDEV 5.3 — doğru HTTP durum kodları.
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        else
+            context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        else
+            context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
+
 var app = builder.Build();
+
+// ---------------------------------------------------------------
+// Uygulama açılırken: migration'ları uygula + rolleri, admin'i, örnek verileri ekle.
+// ---------------------------------------------------------------
+await VeriTohumlayici.TohumlaAsync(app.Services);
 
 // ---------------------------------------------------------------
 // 2) MIDDLEWARE HATTI — SIRA ÖNEMLİ.
@@ -30,11 +83,24 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// DOĞRU SIRA: Routing → Authentication → Authorization
+//   UseRouting        : isteğin hangi endpoint'e gideceğini belirler
+//   UseAuthentication : çerezi (veya MCP anahtarını) okuyup "bu kim?" sorusunu cevaplar → HttpContext.User
+//   UseAuthorization  : "[Authorize] bu kişiye izin veriyor mu?" kararını verir
+// Authentication'ı unutursak herkes "anonim" görünür ve korumalı sayfalar hep giriş ister.
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
 
+// Areas (Admin, Veteriner) için rota. Genel rotadan ÖNCE tanımlanmalı.
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Panel}/{action=Index}/{id:int?}");
+
+// {id:int?} → id varsa sayı olmak zorunda; /Randevu/Detay/abc temiz bir 404 verir.
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id:int?}")

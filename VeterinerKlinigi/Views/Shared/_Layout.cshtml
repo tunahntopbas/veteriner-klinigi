@@ -1,9 +1,18 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@*
+    LAYOUT — her sayfada değişmeyen kısım: menü, mesaj kutusu, footer.
+    _ViewStart.cshtml tarafından otomatik atanır (Areas içindekiler dahil).
+
+    Menü kullanıcının ROLÜNE göre değişir (User.IsInRole).
+    DİKKAT: Menüyü gizlemek GÜVENLİK DEĞİLDİR. Asıl koruma controller'lardaki
+    [Authorize(Roles = ...)] ve servislerdeki sahiplik kontrolleridir.
+    Menü sadece kullanıcıya göremeyeceği linkleri göstermemek içindir.
+*@
+<!DOCTYPE html>
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - VeterinerKlinigi</title>
+    <title>@ViewData["Title"] — Pati Veteriner Kliniği</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -11,40 +20,95 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VeterinerKlinigi</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-dark ust-menu mb-4">
+            <div class="container">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">🐾 Pati Klinik</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#anaMenu"
+                        aria-controls="anaMenu" aria-expanded="false" aria-label="Menüyü aç">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                <div class="collapse navbar-collapse" id="anaMenu">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Hizmetler">Hizmetler</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Hekimler">Hekimlerimiz</a></li>
+
+                        @if (User.IsInRole(Roller.Uye))
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="EvcilHayvan" asp-action="Index">Hayvanlarım</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Randevu" asp-action="Index">Randevularım</a></li>
+                        }
+                        @if (User.IsInRole(Roller.Veteriner))
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="Veteriner" asp-controller="Randevu" asp-action="Index">Randevularım (Hekim)</a></li>
+                        }
+                        @if (User.IsInRole(Roller.Admin))
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="Admin" asp-controller="Panel" asp-action="Index">Admin Paneli</a></li>
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Profil" asp-action="Index" title="Profil ve MCP erişim anahtarları">
+                                    👤 @User.Identity.Name
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                @* Çıkış POST ile yapılır; form antiforgery token'ı otomatik ekler. *@
+                                <form asp-area="" asp-controller="Hesap" asp-action="Cikis" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-link nav-link">Çıkış</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Hesap" asp-action="Giris">Giriş</a></li>
+                            <li class="nav-item"><a class="btn btn-light btn-sm ms-lg-2 mt-1" asp-area="" asp-controller="Hesap" asp-action="Kayit">Üye Ol</a></li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-5">
+            @* PRG sonrası tek seferlik mesajlar (TempData bir sonraki isteğe kadar yaşar). *@
+            @if (TempData["Mesaj"] is string mesaj)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @mesaj
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+                </div>
+            }
+            @if (TempData["Hata"] is string hata)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @hata
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+                </div>
+            }
+
             @RenderBody()
         </main>
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - VeterinerKlinigi - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        <div class="container d-flex justify-content-between flex-wrap">
+            <span>&copy; 2026 — Pati Veteriner Kliniği</span>
+            <span>
+                <a href="/scalar" target="_blank">REST API dokümantasyonu</a>
+            </span>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @* Sayfaya özel betikler buraya gelir (@section Scripts { ... }). *@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
