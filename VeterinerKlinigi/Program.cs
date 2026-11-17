@@ -83,6 +83,9 @@ builder.Services.AddScoped<IUzmanlikServisi, UzmanlikServisi>();
 builder.Services.AddScoped<IVeterinerServisi, VeterinerServisi>();
 builder.Services.AddScoped<IEvcilHayvanServisi, EvcilHayvanServisi>();
 builder.Services.AddScoped<IAsiServisi, AsiServisi>();
+builder.Services.AddScoped<IMusaitlikServisi, MusaitlikServisi>();
+builder.Services.AddScoped<IRandevuServisi, RandevuServisi>();
+builder.Services.AddScoped<IRaporServisi, RaporServisi>();
 
 var app = builder.Build();
 
