@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
+using VeterinerKlinigi.Mcp;
 using Microsoft.EntityFrameworkCore;
 using VeterinerKlinigi.Data;
 using VeterinerKlinigi.Models;
@@ -97,6 +99,30 @@ builder.Services.AddScoped<IAsiServisi, AsiServisi>();
 builder.Services.AddScoped<IMusaitlikServisi, MusaitlikServisi>();
 builder.Services.AddScoped<IRandevuServisi, RandevuServisi>();
 builder.Services.AddScoped<IRaporServisi, RaporServisi>();
+builder.Services.AddScoped<IMcpAnahtarServisi, McpAnahtarServisi>();
+
+// ---------------------------------------------------------------
+// MCP SUNUCUSU (ÖDEV 6.x)
+// ---------------------------------------------------------------
+// 1) Yeni kimlik doğrulama şeması: "Authorization: Bearer vk_..." (Mcp/McpAnahtarKimlikDogrulama.cs).
+//    Varsayılan şema Identity'nin çerezi olarak kalır; bu şema SADECE /mcp ucunda kullanılır.
+builder.Services.AddAuthentication()
+    .AddScheme<AuthenticationSchemeOptions, McpAnahtarKimlikDogrulama>(McpAnahtarKimlikDogrulama.SemaAdi, null);
+
+// 2) Yetki politikası: "McpErisimi" = Bearer anahtarla kimliği doğrulanmış herhangi bir kullanıcı.
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("McpErisimi", policy => policy
+        .AddAuthenticationSchemes(McpAnahtarKimlikDogrulama.SemaAdi)
+        .RequireAuthenticatedUser());
+
+// 3) MCP araçları HttpContext.User'a (anahtarın sahibi) ulaşabilsin diye.
+builder.Services.AddHttpContextAccessor();
+
+// 4) MCP sunucusu: Streamable HTTP taşıma + Mcp/KlinikAraclari.cs içindeki araçlar.
+//    Stateless: her istek bağımsız; oturum (session) tutulmaz, kimlik her istekte yeniden doğrulanır.
+builder.Services.AddMcpServer(o => o.ServerInfo = new() { Name = "pati-veteriner-klinigi", Version = "1.0.0" })
+    .WithHttpTransport(o => o.Stateless = true)
+    .WithTools<KlinikAraclari>();
 
 var app = builder.Build();
 
@@ -133,6 +159,9 @@ app.MapScalarApiReference(o => o.WithTitle("Pati Veteriner Kliniği — REST API
 
 // REST API controller'ları attribute routing kullanır ([Route("api/...")]).
 app.MapControllers();
+
+// ÖDEV 6.1 / 6.4 — MCP ucu: POST /mcp. Anahtarsız istek → 401.
+app.MapMcp("/mcp").RequireAuthorization("McpErisimi");
 
 // Areas (Admin, Veteriner) için rota. Genel rotadan ÖNCE tanımlanmalı.
 app.MapControllerRoute(
