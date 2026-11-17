@@ -1,29 +1,43 @@
+using Microsoft.EntityFrameworkCore;
+using VeterinerKlinigi.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ---------------------------------------------------------------
+// 1) SERVİS KAYDI — builder.Build()'dan ÖNCE olmak zorunda.
+// ---------------------------------------------------------------
 builder.Services.AddControllersWithViews();
+
+// Veritabanı: PostgreSQL + EF Core.
+// Bağlantı dizesi appsettings.json'da DEĞİL, "user-secrets" içinde durur
+// (parola depoya girmesin diye). Ayar adı: ConnectionStrings:VarsayilanBaglanti
+// ÖDEV GitHub-Gizlilik — bağlantı dizesi parolaları depoya konmamalı.
+var baglantiDizesi = builder.Configuration.GetConnectionString("VarsayilanBaglanti")
+    ?? throw new InvalidOperationException(
+        "Bağlantı dizesi bulunamadı. README'deki 'dotnet user-secrets set' adımını yapın.");
+
+builder.Services.AddDbContext<UygulamaDbContext>(options => options.UseNpgsql(baglantiDizesi));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ---------------------------------------------------------------
+// 2) MIDDLEWARE HATTI — SIRA ÖNEMLİ.
+// ---------------------------------------------------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Home}/{action=Index}/{id:int?}")
     .WithStaticAssets();
-
 
 app.Run();
