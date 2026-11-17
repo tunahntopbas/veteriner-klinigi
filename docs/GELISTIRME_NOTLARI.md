@@ -137,7 +137,8 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 10 | Üye ve hekim sayfaları | `Controllers/*`, `Views/*`, `Areas/Hekim/*` | `6f1df64` |
 | 11 | Uçtan uca tarayıcı testi, hata sayfası, tema düzeltmeleri, ekran görüntüleri | `HomeController.Durum`, `site.css`, `docs/ekran-goruntuleri/` | `d444ab5` |
 | 12 | **Hata düzeltmesi:** tamamlanan randevu saati boş sayılıyordu → `DoluSayilanDurumlar`'a eklendi. MCP Inspector çıktısı, SQL betiği | `MusaitlikServisi.cs:37`, `docs/veritabani-olusturma.sql` | `e6967d6` |
-| 13 | README raporu ve bu dosya | `README.md`, `docs/GELISTIRME_NOTLARI.md` | (bu commit) |
+| 13 | README raporu ve bu dosya | `README.md`, `docs/GELISTIRME_NOTLARI.md` | `8113fac` |
+| 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | (bu commit) |
 
 **Karşılaşılan sorunlar ve çözümleri** (sunumda "zorlandığın yer neresiydi?" sorusuna)
 - *Rapor sorgusu SQL'e çevrilemedi*: `GroupBy` içinde record constructor ve filtreli `Sum` EF Core'da çevrilemiyor.
@@ -145,6 +146,16 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 - *Ondalık sayılar*: tr-TR'de ayırıcı virgül, tarayıcı nokta gönderiyor → kültürü kopyalayıp yalnız sayı ayırıcısını değiştirdik (`Program.cs:21`).
 - *Area adı çakışması*: "Veteriner" area'sı `Models.Veteriner` ile çakıştı → "Hekim".
 - *Tamamlanan randevu çakışması*: Test sırasında bulundu; tamamlanmış randevunun saatine yeni randevu alınabiliyordu. Düzeltildi.
+- *Gelecekteki randevuyu tamamlama*: Kod incelemesinde bulundu; hekim yarınki randevuyu bugünden "Tamamlandı" yapabiliyordu. Artık `BaslangicZamani <= şimdi` şartı var.
+
+**Uç durum testleri (adım 14'te, çalışan uygulamaya karşı, 47/47 geçti)**
+Çakışma (farklı hayvan / uzun hizmet / uç uca 10:00–10:30 + 10:30), Pazar kapalı, öğle arası, bitişi müsaitlik dışına taşan saat,
+klinik kapanışını aşan hizmet, geçmiş tarih, hekimin vermediği hizmet, başkasının hayvanı (404), Cumartesi çalışmayan hekim,
+uygun saat listesinin dolu saatleri göstermesi; geçersiz durum geçişleri (onaylıyı tekrar onaylama, Bekliyor → Tamamlandı,
+iptal edileni onaylama), başka hekimin onay/not denemesi (404), üyenin hekim paneline girmesi (engellendi), tamamlanmamışa not,
+saati gelmemişi tamamlama, saati geçmiş bekleyeni onaylama, reddedilen saatin yeniden boşalması, düzenlemede kendisiyle çakışmama,
+tamamlananı düzenleme/iptal, randevusu olan hizmet/hekimi silme (500 değil, anlaşılır mesaj), rapor (red/iptal sayılmaz,
+ciro yalnız tamamlanan), ters tarih aralığı (400). MCP: 6 araç listelendi, çakışma nedeni döndü, başkasının hayvanı bulunamadı, anahtarsız 401.
 
 ---
 
@@ -203,8 +214,11 @@ Tamamlandi) her randevusu `[mevcutBas, mevcutBit)` için:
 `10:00 < 10:45` → çakışır. Yeni 10:30–11:00 → `10:30 < 10:30` yanlış → çakışmaz (uç uca olabilir).
 Sıralı kontroller (`MusaitlikServisi.RandevuUygunMuAsync`): geçmiş tarih mi → hizmet/hekim aktif mi, hekim bu hizmeti veriyor mu →
 klinik o gün/saatte açık mı → hekimin müsaitlik aralığına başlangıç VE bitiş sığıyor mu → çakışma. Her biri Türkçe neden döner.
-*Aynı anda iki istek?* `OlusturAsync` transaction içinde `pg_advisory_xact_lock(veterinerId)` alır (`RandevuServisi.cs:87`):
-aynı hekime eşzamanlı iki istek sıraya girer, ikincisi birincinin kaydını görür.
+*Aynı anda iki istek?* `OlusturAsync` / `GuncelleAsync` transaction içinde iki kilit alır (`RandevuServisi.KilitleriAlAsync`):
+`pg_advisory_xact_lock(0, veterinerId)` aynı hekime, `pg_advisory_xact_lock(1, evcilHayvanId)` aynı hayvana gelen eşzamanlı
+istekleri sıraya sokar; ikinci istek birincinin kaydını görür ve "çakışıyor" cevabı alır. İlk sayı kilidin türüdür, böylece
+"hekim 3" ile "hayvan 3" aynı kilit sayılmaz. Kilitler hep aynı sırayla alındığı için kilitlenme (deadlock) olmaz.
+Ayrıca aynı hayvanın aynı saatte iki randevusu da olamaz (`MusaitlikServisi`, kontrol 6).
 Reddedilen/iptal edilen randevu saati tekrar boşa çıkar.
 
 **S: IDOR (adres çubuğunda id değiştirme) korumasını nasıl yaptın?**
@@ -217,6 +231,18 @@ yasak" bilgisini de vermemek. Aynı kural MVC, REST ve MCP'de geçerli çünkü 
 `Bekliyor → Onaylandi | Reddedildi | IptalEdildi`, `Onaylandi → Tamamlandi | IptalEdildi`. Diğer geçişler `GecisGecerliMi`
 (`RandevuServisi.cs:264`) tarafından reddedilir. Onay/red/tamamla yalnız Admin veya randevunun kendi hekimi. Muayene notu yalnız
 Tamamlandi randevuya ve yalnız kendi hekimi tarafından.
+
+**S: Tamamlanmamış randevuya muayene notu girilebilir mi?**
+Hayır, iki kat koruma var. (1) Not yalnızca "Tamamlandı" durumundaki randevuya ve yalnızca randevunun kendi hekimi tarafından
+yazılır (`RandevuServisi.MuayeneNotuKaydetAsync`). (2) Bir randevu ancak saati geldiyse "Tamamlandı" yapılabilir:
+`BaslangicZamani > şimdi` ise "Henüz saati gelmemiş randevu tamamlanamaz." hatası döner (`DurumDegistirAsync`, `// ÖDEV 3.4`).
+Böylece yarınki randevuya bugünden not yazılamaz ve gerçekleşmemiş randevu ciroya girmez. Tersine, saati geçmiş ama hiç
+onaylanmamış bir talep artık onaylanamaz; yalnızca reddedilebilir.
+
+**S: "Şimdi" hangi saate göre?**
+Sunucunun yerel saatine (`DateTime.Now`). Klinik saati = sunucu yerel saati (Europe/Istanbul) kabul edildi; veritabanı sütunları
+da saat dilimsiz (`timestamp without time zone`). Uygulama UTC'de çalışan bir sunucuya taşınırsa saatler 3 saat kayar; o durumda
+`TimeZoneInfo.ConvertTime(DateTime.UtcNow, "Europe/Istanbul")` kullanılmalı. Tek klinik ve yerel çalıştırma için şu hâli yeterli.
 
 **S: Hizmetin fiyatı değişirse eski randevular ne olur?**
 Değişmez. Randevu oluşurken süre ve ücret randevu satırına kopyalanır (`RandevuServisi.cs:104-105`). Rapordaki ciro da bu kopyadan hesaplanır.
