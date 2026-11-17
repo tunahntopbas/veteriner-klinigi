@@ -1,0 +1,107 @@
+@*
+    ÖDEV 6.4 — MCP erişim anahtarları. Üretilen anahtar SADECE bir kez gösterilir.
+    ÖDEV 6.1 / 6.5 — Claude Desktop / VS Code / MCP Inspector bağlantı bilgileri.
+*@
+@model List<McpErisimAnahtari>
+@{
+    var mcpAdresi = (string)ViewData["McpAdresi"]!;
+    var yeniAnahtar = TempData["YeniAnahtar"] as string;
+}
+
+<h1 class="h3 mb-3">Profil</h1>
+
+<div class="card kart-golge mb-4">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Ad Soyad</dt><dd class="col-sm-9">@ViewData["AdSoyad"]</dd>
+            <dt class="col-sm-3">E-posta</dt><dd class="col-sm-9">@User.Identity?.Name</dd>
+            <dt class="col-sm-3">Rol</dt><dd class="col-sm-9">@ViewData["Roller"]</dd>
+        </dl>
+    </div>
+</div>
+
+<h2 class="h4">🤖 Yapay zekâ asistanı bağlantısı (MCP)</h2>
+<p>
+    Bu klinik bir <strong>MCP (Model Context Protocol) sunucusu</strong> sunar. Bir AI asistanını bağladığınızda
+    asistan <em>sizin adınıza</em> şu araçları çağırabilir: <code>hizmetler</code>, <code>hayvanlarim</code>,
+    <code>uygun_saatler</code>, <code>asi_takvimi</code>, <code>randevu_olustur</code>, <code>randevularim</code>.
+    Asistan yalnızca <strong>sizin</strong> verilerinizi görür.
+</p>
+
+@if (yeniAnahtar is not null)
+{
+    <div class="alert alert-warning">
+        <strong>Yeni anahtarınız (bir daha gösterilmeyecek, şimdi kopyalayın):</strong>
+        <div class="input-group mt-2">
+            <input id="yeniAnahtar" class="form-control font-monospace" value="@yeniAnahtar" readonly />
+            <button class="btn btn-outline-dark" type="button" onclick="navigator.clipboard.writeText($('#yeniAnahtar').val()); $(this).text('Kopyalandı ✓');">Kopyala</button>
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card kart-golge">
+            <div class="card-body">
+                <h3 class="h6">Yeni erişim anahtarı</h3>
+                <form asp-action="AnahtarUret" method="post" class="d-flex gap-2">
+                    <input name="Ad" class="form-control" placeholder="Anahtar adı (ör. Claude Desktop)" maxlength="60" required />
+                    <button type="submit" class="btn btn-primary text-nowrap">Anahtar üret</button>
+                </form>
+
+                <h3 class="h6 mt-4">Anahtarlarım</h3>
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Ad</th><th>Başı</th><th>Son kullanım</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var a in Model)
+                        {
+                            <tr class="@(a.IptalEdildi ? "text-muted text-decoration-line-through" : "")">
+                                <td>@a.Ad</td>
+                                <td class="font-monospace">@a.OnEk…</td>
+                                <td class="small">@(a.SonKullanimZamani?.ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
+                                <td class="text-end">
+                                    @if (!a.IptalEdildi)
+                                    {
+                                        <form asp-action="AnahtarIptal" asp-route-id="@a.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">İptal</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.Count == 0) { <tr><td colspan="4" class="text-muted">Henüz anahtar yok.</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card kart-golge">
+            <div class="card-body small">
+                <h3 class="h6">Bağlantı bilgileri</h3>
+                <p class="mb-1">Sunucu adresi (Streamable HTTP): <code>@mcpAdresi</code></p>
+                <p>Başlık: <code>Authorization: Bearer vk_...</code></p>
+
+                <h4 class="h6 mt-3">MCP Inspector ile test</h4>
+                <pre class="bg-light p-2 rounded">npx @@modelcontextprotocol/inspector</pre>
+                <p>Transport: <em>Streamable HTTP</em>, URL: <code>@mcpAdresi</code>, Authentication → Bearer token alanına anahtarı yapıştırın.</p>
+
+                <h4 class="h6 mt-3">VS Code</h4>
+                <p>Projedeki <code>.vscode/mcp.json</code> hazır; Copilot Chat → Agent modunda sunucuyu başlatınca anahtarı sorar.</p>
+
+                <h4 class="h6 mt-3">Claude Desktop (<code>claude_desktop_config.json</code>)</h4>
+<pre class="bg-light p-2 rounded">{
+  "mcpServers": {
+    "pati-klinik": {
+      "command": "npx",
+      "args": ["mcp-remote", "@mcpAdresi",
+               "--header", "Authorization:Bearer ${VK_ANAHTAR}"],
+      "env": { "VK_ANAHTAR": "vk_..." }
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+@* ÖDEV 3.4 — Hekimin tamamlanan randevu için muayene notu. *@
+@model MuayeneNotuVM
+@{
+    var randevu = ViewData["Randevu"] as Randevu;
+}
+
+<h1 class="h3 mb-1">Muayene Notu</h1>
+@if (randevu is not null)
+{
+    <p class="text-muted">@randevu.EvcilHayvan?.Ad · @randevu.Hizmet?.Ad · @randevu.BaslangicZamani.ToString("dd.MM.yyyy HH:mm")</p>
+}
+
+<form asp-action="MuayeneNotu" asp-route-id="@Model.RandevuId" method="post" class="card kart-golge" style="max-width:720px">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="RandevuId" />
+        <div class="mb-3">
+            <label asp-for="Teshis" class="form-label"></label>
+            <input asp-for="Teshis" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Tedavi" class="form-label"></label>
+            <input asp-for="Tedavi" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Notlar" class="form-label"></label>
+            <textarea asp-for="Notlar" class="form-control" rows="6"></textarea>
+            <span asp-validation-for="Notlar" class="text-danger small"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Detay" asp-route-id="@Model.RandevuId" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

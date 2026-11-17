@@ -1,0 +1,128 @@
+@*
+    ÖDEV 4.1 — Randevu alma: hayvan → hizmet → tarih → (uygun hekim + boş saat).
+
+    REST API NEREDE TÜKETİLİYOR? (sunum sorusu) — TAM BURADA:
+      Hizmet veya tarih değişince jQuery, GET /api/veterinerler/uygun?hizmetId=..&tarih=..
+      ucunu çağırır. Gelen JSON'daki her hekim için boş saat düğmeleri çizilir.
+      Kullanıcı bir saate tıklayınca VeterinerId ve Saat GİZLİ alanlara yazılır, form normal POST ile gider.
+
+    ÖDEV 4.2 — Liste zaten sadece uygun saatleri gösterir; yine de sunucu kaydetmeden önce
+    tüm kuralları tekrar kontrol eder ve sorun varsa formun üstünde nedenini yazar.
+*@
+@model RandevuFormVM
+@{ var ekleme = Model.Id == 0; }
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(ekleme ? "Olustur" : "Duzenle")" asp-route-id="@(ekleme ? null : Model.Id)" method="post" id="randevuFormu" class="card kart-golge">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="EvcilHayvanId" class="form-label">1) Hayvan</label>
+                <select asp-for="EvcilHayvanId" asp-items="Model.HayvanSecenekleri" class="form-select">
+                    <option value="0">Seçin...</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="HizmetId" class="form-label">2) Hizmet</label>
+                <select asp-for="HizmetId" asp-items="Model.HizmetSecenekleri" class="form-select">
+                    <option value="0">Seçin...</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Tarih" class="form-label">3) Tarih</label>
+                <input asp-for="Tarih" type="date" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+        </div>
+
+        <label class="form-label">4) Uygun hekim ve saat</label>
+        <div id="uygunHekimler" class="mb-3"><div class="text-muted">Hizmet ve tarih seçin.</div></div>
+
+        @* jQuery'nin dolduracağı gizli alanlar *@
+        <input type="hidden" asp-for="VeterinerId" />
+        <input type="hidden" asp-for="Saat" />
+        <div id="secimOzeti" class="alert alert-success d-none"></div>
+
+        <div class="mb-3">
+            <label asp-for="SahipNotu" class="form-label"></label>
+            <textarea asp-for="SahipNotu" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="SahipNotu" class="text-danger small"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">@(ekleme ? "Randevu talebi gönder" : "Değişikliği kaydet")</button>
+        <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function guvenli(m) { return $('<div>').text(m ?? '').html(); }
+
+        // Düzenleme ekranında mevcut seçim (sunucudan gelen değerler)
+        var seciliHekim = '@Model.VeterinerId';
+        var seciliSaat = '@(Model.Saat?.ToString("HH:mm") ?? "")';
+
+        function uygunlariGetir() {
+            var hizmetId = $('#HizmetId').val();
+            var tarih = $('#Tarih').val();
+            var kutu = $('#uygunHekimler');
+            if (hizmetId === '0' || !tarih) {
+                kutu.html('<div class="text-muted">Hizmet ve tarih seçin.</div>');
+                return;
+            }
+            kutu.html('<div class="text-muted">Uygun saatler getiriliyor...</div>');
+
+            // ---- REST API ÇAĞRISI ----
+            $.getJSON('/api/veterinerler/uygun', { hizmetId: hizmetId, tarih: tarih })
+                .done(function (hekimler) {          // 200 → UygunHekimDto[]
+                    kutu.empty();
+                    if (hekimler.length === 0) {
+                        kutu.html('<div class="alert alert-warning mb-0">Bu gün bu hizmet için boş saat yok (klinik kapalı ya da hekimler dolu). Başka bir gün seçin.</div>');
+                        return;
+                    }
+                    $.each(hekimler, function (_, h) {
+                        var dugmeler = $.map(h.bosSaatler, function (s) {
+                            var aktif = (String(h.veterinerId) === seciliHekim && s === seciliSaat) ? ' active' : '';
+                            return '<button type="button" class="btn btn-outline-secondary btn-sm saat-dugmesi m-1' + aktif +
+                                '" data-hekim="' + h.veterinerId + '" data-hekim-ad="' + guvenli(h.adSoyad) + '" data-saat="' + s + '">' + s + '</button>';
+                        }).join('');
+                        kutu.append('<div class="border rounded p-2 mb-2 bg-white"><strong>🩺 ' + guvenli(h.unvan) + ' ' + guvenli(h.adSoyad) +
+                            '</strong> <small class="text-muted">' + $.map(h.uzmanliklar, guvenli).join(', ') + '</small><div>' + dugmeler + '</div></div>');
+                    });
+                })
+                .fail(function (xhr) {                // 400 / 404 → HataDto { hata }
+                    var mesaj = (xhr.responseJSON && xhr.responseJSON.hata) || 'Uygun saatler alınamadı.';
+                    kutu.html('<div class="alert alert-danger mb-0">' + guvenli(mesaj) + '</div>');
+                });
+        }
+
+        // Saat düğmesine tıklanınca seçimi gizli alanlara yaz.
+        $('#uygunHekimler').on('click', '.saat-dugmesi', function () {
+            $('.saat-dugmesi').removeClass('active');
+            $(this).addClass('active');
+            seciliHekim = String($(this).data('hekim'));
+            seciliSaat = $(this).data('saat');
+            $('#VeterinerId').val(seciliHekim);
+            $('#Saat').val(seciliSaat);
+            $('#secimOzeti').removeClass('d-none')
+                .text('Seçiminiz: ' + $(this).data('hekim-ad') + ' — ' + new Date($('#Tarih').val()).toLocaleDateString('tr-TR') + ' ' + seciliSaat);
+        });
+
+        // Hizmet veya tarih değişirse eski seçim geçersiz → temizle ve yeniden sorgula.
+        $('#HizmetId, #Tarih').on('change', function () {
+            seciliHekim = ''; seciliSaat = '';
+            $('#VeterinerId').val('0'); $('#Saat').val('');
+            $('#secimOzeti').addClass('d-none');
+            uygunlariGetir();
+        });
+
+        // Gizli alanlar da doğrulansın (jquery.validate varsayılan olarak gizli alanları atlar).
+        $.validator.setDefaults({ ignore: [] });
+
+        uygunlariGetir();
+    </script>
+}

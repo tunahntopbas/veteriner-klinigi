@@ -1,0 +1,17 @@
+@* Hekimin KENDİ randevuları (servis sorgusu hekime göre filtreler). *@
+@model List<Randevu>
+@{
+    var secili = ViewData["Durum"] as RandevuDurumu?;
+}
+
+<h1 class="h3 mb-3">Randevularım (Hekim)</h1>
+
+<div class="btn-group mb-3 flex-wrap" role="group" aria-label="Durum filtresi">
+    <a asp-action="Index" class="btn btn-outline-secondary @(secili is null ? "active" : "")">Hepsi</a>
+    @foreach (var d in Enum.GetValues<RandevuDurumu>())
+    {
+        <a asp-action="Index" asp-route-durum="@d" class="btn btn-outline-secondary @(secili == d ? "active" : "")">@RandevuServisi.DurumAdi(d)</a>
+    }
+</div>
+
+<partial name="_RandevuTablosu" model="Model" />

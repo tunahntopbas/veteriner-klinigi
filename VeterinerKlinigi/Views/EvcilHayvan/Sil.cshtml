@@ -1,0 +1,10 @@
+@model EvcilHayvan
+
+<h1 class="h3 mb-3">Hayvan kaydını sil</h1>
+<div class="alert alert-warning">
+    <strong>@Model.Ad</strong> (@Model.Tur) ve tüm aşı kayıtları, geçmiş randevuları ve fotoğrafı silinecek. Emin misiniz?
+</div>
+<form asp-action="Sil" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Evet, sil</button>
+    <a asp-action="Detay" asp-route-id="@Model.Id" class="btn btn-link">Vazgeç</a>
+</form>

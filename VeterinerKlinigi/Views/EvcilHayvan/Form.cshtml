@@ -1,0 +1,80 @@
+@*
+    ÖDEV 3.2 — Evcil hayvan ekleme/düzenleme.
+    enctype="multipart/form-data" → dosya (fotoğraf) gönderebilmek için ŞART; yoksa IFormFile hep null gelir.
+    ÖDEV Beklenen-Validation — istemci + sunucu doğrulama.
+*@
+@model EvcilHayvanVM
+@{ var ekleme = Model.Id == 0; }
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(ekleme ? "Ekle" : "Duzenle")" asp-route-id="@(ekleme ? null : Model.Id)" method="post"
+      enctype="multipart/form-data" class="card kart-golge" style="max-width:720px">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Ad" class="form-label"></label>
+                <input asp-for="Ad" class="form-control" />
+                <span asp-validation-for="Ad" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Tur" class="form-label"></label>
+                <select asp-for="Tur" class="form-select" asp-items="@(new SelectList(EvcilHayvanVM.Turler))">
+                    <option value="">Seçin...</option>
+                </select>
+                <span asp-validation-for="Tur" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Irk" class="form-label"></label>
+                <input asp-for="Irk" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="DogumTarihi" class="form-label"></label>
+                <input asp-for="DogumTarihi" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="DogumTarihi" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Kilo" class="form-label"></label>
+                <input asp-for="Kilo" class="form-control" step="0.01" />
+                <span asp-validation-for="Kilo" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Fotograf" class="form-label"></label>
+            @* accept: dosya seçme penceresinde sadece resimler görünür (kolaylık; asıl kontrol sunucuda). *@
+            <input asp-for="Fotograf" type="file" class="form-control" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+            <span asp-validation-for="Fotograf" class="text-danger small"></span>
+            @if (Model.FotografVar)
+            {
+                <div class="d-flex align-items-center gap-3 mt-2">
+                    <img src="@Url.Action("Fotograf", new { id = Model.Id })" alt="Mevcut fotoğraf" style="height:64px;border-radius:.4rem" />
+                    <div class="form-check">
+                        <input asp-for="FotografiKaldir" class="form-check-input" />
+                        <label asp-for="FotografiKaldir" class="form-check-label"></label>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="@(ekleme ? "Index" : "Detay")" asp-route-id="@(ekleme ? null : Model.Id)" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // İstemci tarafı ek kontrol: 2 MB'tan büyük dosyayı daha göndermeden uyar.
+        $('#Fotograf').on('change', function () {
+            var dosya = this.files[0];
+            if (dosya && dosya.size > 2 * 1024 * 1024) {
+                alert('Fotoğraf en fazla 2 MB olabilir.');
+                $(this).val('');
+            }
+        });
+    </script>
+}

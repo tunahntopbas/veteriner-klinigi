@@ -1,0 +1,19 @@
+@* ÖDEV 1.2 — Hizmetler, süre ve ücretleri (herkese açık). *@
+@model List<Hizmet>
+
+<h1 class="h3 mb-3">Hizmetlerimiz</h1>
+<div class="row g-3">
+    @foreach (var h in Model)
+    {
+        <div class="col-sm-6 col-lg-4">
+            <div class="card kart-golge h-100">
+                <div class="card-body">
+                    <h2 class="h5">@h.Ad</h2>
+                    <p class="text-muted small">@h.Aciklama</p>
+                    <span class="badge bg-light text-dark border">⏱ @h.SureDakika dk</span>
+                    <span class="badge bg-light text-dark border">@h.Ucret.ToString("N2") TL</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>

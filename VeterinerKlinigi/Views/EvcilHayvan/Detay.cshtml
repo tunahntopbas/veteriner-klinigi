@@ -1,0 +1,128 @@
+@*
+    Evcil hayvan detayı.
+    - Bilgiler ve randevu geçmişi: controller'dan (Model)
+    - ÖDEV 3.3 / 5.2 — "Aşı takvimi" kutusu: jQuery → GET /api/evcil-hayvanlar/{id}/asilar (REST API tüketimi)
+    - Aşı kayıtları tablosu (CRUD bağlantılarıyla): Model.AsiKayitlari
+*@
+@model EvcilHayvan
+@{
+    var kb = User.Bilgi();
+    var sahibiMi = kb.AdminMi || Model.SahipId == kb.Id;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h3 mb-0">@Model.Ad</h1>
+    <div>
+        @if (User.IsInRole(Roller.Uye) && Model.SahipId == kb.Id)
+        {
+            <a asp-controller="Randevu" asp-action="Olustur" asp-route-hayvanId="@Model.Id" class="btn btn-primary">Randevu al</a>
+        }
+        @if (sahibiMi)
+        {
+            <a asp-action="Duzenle" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
+            <a asp-action="Sil" asp-route-id="@Model.Id" class="btn btn-outline-danger">Sil</a>
+        }
+        <a asp-action="Index" class="btn btn-link">← Liste</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <partial name="_HayvanKarti" model="Model" />
+        <div class="card kart-golge mt-3">
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Doğum tarihi</dt><dd>@Model.DogumTarihi.ToString("dd.MM.yyyy")</dd>
+                    <dt>Sahibi</dt><dd>@Model.Sahip?.AdSoyad</dd>
+                    <dt>Kayıt</dt><dd class="text-muted">@Model.KayitZamani.ToString("dd.MM.yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        @* ---- REST API'den gelen aşı takvimi ---- *@
+        <div class="card kart-golge mb-3">
+            <div class="card-header bg-white"><strong>💉 Yaklaşan aşılar</strong> <small class="text-muted">— kaynak: GET /api/evcil-hayvanlar/@Model.Id/asilar</small></div>
+            <ul id="yaklasanAsilar" class="list-group list-group-flush"><li class="list-group-item text-muted">Yükleniyor...</li></ul>
+        </div>
+
+        @* ---- Aşı kayıtları (CRUD) ---- *@
+        <div class="card kart-golge mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Aşı geçmişi</strong>
+                <a asp-controller="AsiKaydi" asp-action="Ekle" asp-route-hayvanId="@Model.Id" class="btn btn-sm btn-primary">+ Aşı ekle</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Aşı</th><th>Yapıldığı</th><th>Sonraki doz</th><th>Not</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var a in Model.AsiKayitlari)
+                        {
+                            <tr>
+                                <td>@a.AsiAdi</td>
+                                <td>@a.YapildigiTarih.ToString("dd.MM.yyyy")</td>
+                                <td>@(a.SonrakiDozTarihi?.ToString("dd.MM.yyyy") ?? "—")</td>
+                                <td class="small">@a.Notlar</td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-controller="AsiKaydi" asp-action="Duzenle" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    <form asp-controller="AsiKaydi" asp-action="Sil" asp-route-id="@a.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('Aşı kaydı silinsin mi?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.AsiKayitlari.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-muted">Aşı kaydı yok.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* ---- Randevu geçmişi ---- *@
+        <div class="card kart-golge">
+            <div class="card-header bg-white"><strong>Randevu geçmişi</strong></div>
+            <ul class="list-group list-group-flush">
+                @foreach (var r in Model.Randevular)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>@r.BaslangicZamani.ToString("dd.MM.yyyy HH:mm") · @r.Hizmet?.Ad · @r.Veteriner?.AdSoyad</span>
+                        <partial name="_DurumRozeti" model="r.Durum" />
+                    </li>
+                }
+                @if (Model.Randevular.Count == 0)
+                {
+                    <li class="list-group-item text-muted">Randevu yok.</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function guvenli(m) { return $('<div>').text(m ?? '').html(); }
+
+        // REST API → AsiTakvimiDto { gecmis: [...], yaklasan: [...] }
+        $.getJSON('/api/evcil-hayvanlar/@Model.Id/asilar')
+            .done(function (takvim) {
+                var liste = $('#yaklasanAsilar').empty();
+                if (takvim.yaklasan.length === 0) {
+                    liste.append('<li class="list-group-item text-muted">Yaklaşan aşı yok.</li>');
+                    return;
+                }
+                $.each(takvim.yaklasan, function (_, a) {
+                    var renk = a.kalanGun <= 30 ? 'bg-warning text-dark' : 'bg-success';
+                    var tarih = new Date(a.sonrakiDozTarihi).toLocaleDateString('tr-TR');
+                    liste.append('<li class="list-group-item d-flex justify-content-between"><span>' + guvenli(a.asiAdi) +
+                        ' — ' + tarih + '</span><span class="badge ' + renk + '">' + a.kalanGun + ' gün kaldı</span></li>');
+                });
+            })
+            .fail(function (xhr) {
+                $('#yaklasanAsilar').html('<li class="list-group-item text-danger">Aşı takvimi alınamadı (' + xhr.status + ').</li>');
+            });
+    </script>
+}

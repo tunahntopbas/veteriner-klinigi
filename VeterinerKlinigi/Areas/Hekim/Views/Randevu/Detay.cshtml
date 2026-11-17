@@ -1,0 +1,46 @@
+@*
+    ÖDEV 4.4 — Hekim kendi randevusunu onaylar/reddeder/tamamlar.
+    ÖDEV 3.4 — Tamamlanan randevu için muayene notu.
+*@
+@model Randevu
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Randevu #@Model.Id</h1>
+    <a asp-action="Index" class="btn btn-link">← Randevularım</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7"><partial name="_RandevuBilgileri" model="Model" /></div>
+    <div class="col-lg-5">
+        <div class="card kart-golge">
+            <div class="card-body d-grid gap-2">
+                @if (Model.Durum == RandevuDurumu.Bekliyor)
+                {
+                    <form asp-action="Onayla" asp-route-id="@Model.Id" method="post" class="d-grid">
+                        <button type="submit" class="btn btn-success">✓ Onayla</button>
+                    </form>
+                    <form asp-action="Reddet" method="post">
+                        <input type="hidden" name="Id" value="@Model.Id" />
+                        <textarea name="Neden" class="form-control mb-2" rows="2" maxlength="300" placeholder="Red nedeni (sahibe gösterilir)"></textarea>
+                        <button type="submit" class="btn btn-outline-danger w-100">✗ Reddet</button>
+                    </form>
+                }
+                @if (Model.Durum == RandevuDurumu.Onaylandi)
+                {
+                    <form asp-action="Tamamla" asp-route-id="@Model.Id" method="post" class="d-grid">
+                        <button type="submit" class="btn btn-success">Muayene tamamlandı</button>
+                    </form>
+                }
+                @if (Model.Durum == RandevuDurumu.Tamamlandi)
+                {
+                    <a asp-action="MuayeneNotu" asp-route-id="@Model.Id" class="btn btn-primary">
+                        @(Model.MuayeneNotu is null ? "Muayene notu yaz" : "Muayene notunu düzenle")
+                    </a>
+                }
+                <a asp-area="" asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@Model.EvcilHayvanId" class="btn btn-outline-secondary">
+                    @Model.EvcilHayvan?.Ad — aşılar ve geçmiş
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

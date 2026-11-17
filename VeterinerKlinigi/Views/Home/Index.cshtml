@@ -1,8 +1,50 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model Klinik
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-4 p-md-5 mb-4 bg-white kart-golge">
+    <h1 class="display-6 fw-bold">🐾 @Model.Ad</h1>
+    <p class="lead">Evcil dostlarınızın muayene, aşı ve bakım randevularını çevrimiçi alın; aşı takvimini kaçırmayın.</p>
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <a asp-controller="Hesap" asp-action="Kayit" class="btn btn-primary btn-lg me-2">Üye Ol</a>
+        <a asp-controller="Hesap" asp-action="Giris" class="btn btn-outline-primary btn-lg">Giriş Yap</a>
+    }
+    else if (User.IsInRole(Roller.Uye))
+    {
+        <a asp-controller="Randevu" asp-action="Olustur" class="btn btn-primary btn-lg me-2">Randevu Al</a>
+        <a asp-controller="EvcilHayvan" asp-action="Index" class="btn btn-outline-primary btn-lg">Hayvanlarım</a>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card kart-golge h-100">
+            <div class="card-body">
+                <h2 class="h5">Çalışma saatleri</h2>
+                <table class="table table-sm mb-0">
+                    @foreach (var gun in GunAdlari.HaftaSirasi)
+                    {
+                        var c = Model.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun);
+                        <tr>
+                            <td>@GunAdlari.Ad(gun)</td>
+                            <td class="text-end">@(c is null || c.Kapali ? "Kapalı" : $"{c.AcilisSaati:HH\\:mm} – {c.KapanisSaati:HH\\:mm}")</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card kart-golge h-100">
+            <div class="card-body">
+                <h2 class="h5">İletişim</h2>
+                <p class="mb-1">📍 @Model.Adres</p>
+                <p>📞 @Model.Telefon</p>
+                <h2 class="h5 mt-3">Yapay zekâ asistanıyla kullanın</h2>
+                <p class="small mb-0">
+                    Klinik, bir <strong>MCP sunucusu</strong> içerir. Profil sayfanızdan erişim anahtarı üretip
+                    Claude Desktop veya VS Code'a bağlayın; "Pamuk'un bir sonraki aşısı ne zaman?" diye sorun.
+                </p>
+            </div>
+        </div>
+    </div>
 </div>

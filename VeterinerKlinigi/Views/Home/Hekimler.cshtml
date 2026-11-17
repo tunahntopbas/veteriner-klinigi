@@ -1,0 +1,51 @@
+@*
+    ÖDEV 5.1 / 5.2 — REST API tüketimi: GET /api/veterinerler?uzmanlik=...
+    Sayfa boş gelir, liste jQuery ile API'den çekilip kart olarak çizilir.
+    Uzmanlık kutusuna yazdıkça API'nin LINQ filtresi (Uzmanliklar.Any(...Contains...)) çalışır.
+*@
+<h1 class="h3 mb-3">Hekimlerimiz</h1>
+
+<div class="row mb-3">
+    <div class="col-md-5">
+        <input id="uzmanlikFiltresi" class="form-control" placeholder="Uzmanlığa göre filtrele (ör. cerrahi, egzotik)" />
+    </div>
+</div>
+
+<div id="hekimListesi" class="row g-3"><div class="text-muted">Yükleniyor...</div></div>
+
+@section Scripts {
+    <script>
+        function guvenli(m) { return $('<div>').text(m ?? '').html(); }   // XSS'e karşı kaçışlama
+
+        function hekimleriGetir() {
+            // REST API çağrısı → 200 + VeterinerDto[] JSON
+            $.getJSON('/api/veterinerler', { uzmanlik: $('#uzmanlikFiltresi').val() })
+                .done(function (hekimler) {
+                    var liste = $('#hekimListesi').empty();
+                    if (hekimler.length === 0) {
+                        liste.append('<div class="text-muted">Bu uzmanlıkta hekim bulunamadı.</div>');
+                        return;
+                    }
+                    $.each(hekimler, function (_, h) {
+                        var hizmetler = $.map(h.hizmetler, function (s) { return guvenli(s.ad); }).join(', ');
+                        var uzmanliklar = $.map(h.uzmanliklar, function (u) {
+                            return '<span class="badge bg-success-subtle text-success-emphasis me-1">' + guvenli(u) + '</span>';
+                        }).join('');
+                        liste.append(
+                            '<div class="col-md-6 col-lg-4"><div class="card kart-golge h-100"><div class="card-body">' +
+                            '<h2 class="h5">🩺 ' + guvenli(h.unvan) + ' ' + guvenli(h.adSoyad) + '</h2>' +
+                            '<div class="mb-2">' + uzmanliklar + '</div>' +
+                            '<p class="small text-muted mb-0">Hizmetler: ' + hizmetler + '</p>' +
+                            '</div></div></div>');
+                    });
+                });
+        }
+
+        var zamanlayici;
+        $('#uzmanlikFiltresi').on('input', function () {
+            clearTimeout(zamanlayici);                    // her tuşta değil, yazma bitince istek at
+            zamanlayici = setTimeout(hekimleriGetir, 300);
+        });
+        hekimleriGetir();
+    </script>
+}

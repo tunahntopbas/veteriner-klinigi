@@ -1,0 +1,47 @@
+@* ÖDEV 3.3 — Aşı kaydı ekleme/düzenleme. *@
+@model AsiKaydiVM
+@{ var ekleme = Model.Id == 0; }
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+@if (Model.HayvanAdi is not null) { <p class="text-muted">Hayvan: <strong>@Model.HayvanAdi</strong></p> }
+
+<form asp-action="@(ekleme ? "Ekle" : "Duzenle")" asp-route-id="@(ekleme ? null : Model.Id)" method="post" class="card kart-golge" style="max-width:640px">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="EvcilHayvanId" />
+        <input type="hidden" asp-for="HayvanAdi" />
+
+        <div class="mb-3">
+            <label asp-for="AsiAdi" class="form-label"></label>
+            <input asp-for="AsiAdi" class="form-control" list="asiOnerileri" />
+            <datalist id="asiOnerileri">
+                <option value="Karma Aşı"></option><option value="Kuduz Aşısı"></option>
+                <option value="İç Parazit"></option><option value="Dış Parazit"></option>
+                <option value="Lösemi (FeLV)"></option><option value="Bronşin"></option>
+            </datalist>
+            <span asp-validation-for="AsiAdi" class="text-danger small"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col">
+                <label asp-for="YapildigiTarih" class="form-label"></label>
+                <input asp-for="YapildigiTarih" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="YapildigiTarih" class="text-danger small"></span>
+            </div>
+            <div class="col">
+                <label asp-for="SonrakiDozTarihi" class="form-label"></label>
+                <input asp-for="SonrakiDozTarihi" type="date" class="form-control" />
+                <span asp-validation-for="SonrakiDozTarihi" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Notlar" class="form-label"></label>
+            <textarea asp-for="Notlar" class="form-control" rows="2"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@Model.EvcilHayvanId" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
