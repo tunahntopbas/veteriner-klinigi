@@ -8,8 +8,10 @@
   --vk-zemin: #f4f7f6;
 }
 
-html { font-size: 15px; position: relative; min-height: 100%; }
-body { background: var(--vk-zemin); margin-bottom: 70px; }
+html { font-size: 15px; }
+/* Footer her zaman sayfanın altında: body dikey flex, main kalan alanı doldurur */
+body { background: var(--vk-zemin); min-height: 100vh; display: flex; flex-direction: column; }
+body > .container { flex: 1 0 auto; }
 
 /* Bootstrap'in ana rengini kendi rengimizle değiştir */
 .btn-primary { --bs-btn-bg: var(--vk-ana); --bs-btn-border-color: var(--vk-ana);
@@ -35,10 +37,16 @@ a { color: var(--vk-ana); }
 
 /* Randevu oluşturma: boş saat düğmeleri */
 .saat-dugmesi { min-width: 4.5rem; }
-.saat-dugmesi.active { background: var(--vk-ana); color: #fff; border-color: var(--vk-ana); }
+.btn.saat-dugmesi.active { background: var(--vk-ana); color: #fff; border-color: var(--vk-ana); }
 
-.footer { position: absolute; bottom: 0; width: 100%; line-height: 60px; background: #fff; }
+.footer { padding: 1.1rem 0; background: #fff; margin-top: 2rem; }
+
+/* Detay sayfasında hayvan kartı kendi yüksekliğinde kalsın (listede eşit yükseklik için h-100 var) */
+.detay-kart .hayvan-kart { height: auto !important; }
 
 .btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus, .form-select:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(31,122,109,.45);
 }
+
+/* Hata yokken doğrulama özeti kutusu görünmesin (Tag Helper boş div üretir). */
+.validation-summary-valid { display: none; }

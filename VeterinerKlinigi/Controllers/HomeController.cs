@@ -42,6 +42,15 @@ public class HomeController : Controller
         return View();
     }
 
+    // GET /Home/Durum/404 — Program.cs'teki UseStatusCodePagesWithReExecute buraya yönlendirir.
+    // DİKKAT: Durum kodu korunur (404 hâlâ 404); sadece gövdeye anlaşılır bir sayfa yazılır.
+    public IActionResult Durum(int id)
+    {
+        ViewData["Title"] = id == 404 ? "Bulunamadı" : "Hata";
+        Response.StatusCode = id;
+        return View(id);
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

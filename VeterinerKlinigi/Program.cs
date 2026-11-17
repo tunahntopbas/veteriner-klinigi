@@ -158,6 +158,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Sayfa isteklerinde 404/403 gibi boş cevaplar yerine Türkçe hata sayfası göster.
+// /api ve /mcp HARİÇ: onlar JSON/durum kodu ile cevap vermeye devam etmeli.
+app.UseWhen(
+    ctx => !ctx.Request.Path.StartsWithSegments("/api") && !ctx.Request.Path.StartsWithSegments("/mcp"),
+    dal => dal.UseStatusCodePagesWithReExecute("/Home/Durum/{0}"));
+
 // DOĞRU SIRA: Routing → Authentication → Authorization
 //   UseRouting        : isteğin hangi endpoint'e gideceğini belirler
 //   UseAuthentication : çerezi (veya MCP anahtarını) okuyup "bu kim?" sorusunu cevaplar → HttpContext.User
