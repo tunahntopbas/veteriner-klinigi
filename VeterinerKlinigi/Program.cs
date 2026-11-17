@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
+using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using VeterinerKlinigi.Data;
 using VeterinerKlinigi.Models;
@@ -9,7 +11,16 @@ var builder = WebApplication.CreateBuilder(args);
 // ---------------------------------------------------------------
 // 1) SERVİS KAYDI — builder.Build()'dan ÖNCE olmak zorunda.
 // ---------------------------------------------------------------
-builder.Services.AddControllersWithViews();
+// MVC (Controller + View) ve REST API controller'ları aynı altyapıyı kullanır.
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(o =>
+        // API cevaplarında enum'lar sayı değil metin olsun ("Bekliyor" gibi).
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// ---- REST API dokümantasyonu (ÖDEV 5.x) ----
+// AddOpenApi: [ApiController] uçlarını tarayıp /openapi/v1.json belgesini üretir.
+// Scalar bu belgeyi okuyup /scalar adresinde deneme yapılabilen bir arayüz sunar.
+builder.Services.AddOpenApi();
 
 // ---- Veritabanı: PostgreSQL + EF Core ----
 // Bağlantı dizesi appsettings.json'da DEĞİL, "user-secrets" içinde durur
@@ -115,6 +126,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+// REST API belgesi ve arayüzü: /openapi/v1.json ve /scalar
+app.MapOpenApi();
+app.MapScalarApiReference(o => o.WithTitle("Pati Veteriner Kliniği — REST API"));
+
+// REST API controller'ları attribute routing kullanır ([Route("api/...")]).
+app.MapControllers();
 
 // Areas (Admin, Veteriner) için rota. Genel rotadan ÖNCE tanımlanmalı.
 app.MapControllerRoute(

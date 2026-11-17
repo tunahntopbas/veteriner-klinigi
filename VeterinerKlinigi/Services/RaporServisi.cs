@@ -34,17 +34,25 @@ public class RaporServisi : IRaporServisi
         //   SELECT "HizmetId", h."Ad", COUNT(*), COUNT(*) FILTER (...), SUM(...) ... GROUP BY ...
         // Reddedilen ve iptal edilen randevular sayılmaz.
         // Ciro = sadece TAMAMLANAN randevuların (randevu anındaki) ücretleri.
-        return await _db.Randevular
+        var gruplar = await _db.Randevular
             .Where(r => r.BaslangicZamani >= bas && r.BaslangicZamani < bit
                         && r.Durum != RandevuDurumu.Reddedildi && r.Durum != RandevuDurumu.IptalEdildi)
             .GroupBy(r => new { r.HizmetId, r.Hizmet!.Ad })
-            .Select(g => new HizmetOzeti(
+            .Select(g => new
+            {
                 g.Key.HizmetId,
                 g.Key.Ad,
-                g.Count(),
-                g.Count(r => r.Durum == RandevuDurumu.Tamamlandi),
-                g.Where(r => r.Durum == RandevuDurumu.Tamamlandi).Sum(r => r.Ucret)))
-            .OrderByDescending(o => o.Ciro).ThenByDescending(o => o.RandevuSayisi)
+                Toplam = g.Count(),
+                Tamamlanan = g.Count(r => r.Durum == RandevuDurumu.Tamamlandi),
+                // Koşullu toplam: tamamlandıysa ücreti, değilse 0 ekle → SQL'de SUM(CASE WHEN ...)
+                Ciro = g.Sum(r => r.Durum == RandevuDurumu.Tamamlandi ? r.Ucret : 0m)
+            })
             .ToListAsync();
+
+        // Sıralama ve record'a dönüştürme bellekte (veri zaten gruplanmış, birkaç satır).
+        return gruplar
+            .Select(g => new HizmetOzeti(g.HizmetId, g.Ad, g.Toplam, g.Tamamlanan, g.Ciro))
+            .OrderByDescending(o => o.Ciro).ThenByDescending(o => o.RandevuSayisi)
+            .ToList();
     }
 }
