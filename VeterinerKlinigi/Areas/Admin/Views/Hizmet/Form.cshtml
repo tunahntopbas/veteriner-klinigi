@@ -1,0 +1,51 @@
+@*
+    Ekle ve Düzenle AYNI formu kullanır (tek dosya). Fark: Id = 0 → Ekle, değilse Duzenle action'ına gider.
+    ÖDEV Beklenen-Validation — [Required], [Range] kuralları tarayıcıda da çalışır (_ValidationScriptsPartial).
+*@
+@model HizmetFormVM
+@{ var ekleme = Model.Id == 0; }
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(ekleme ? "Ekle" : "Duzenle")" asp-route-id="@(ekleme ? null : Model.Id)" method="post" class="card kart-golge" style="max-width:640px">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-3">
+            <label asp-for="Ad" class="form-label"></label>
+            <input asp-for="Ad" class="form-control" />
+            <span asp-validation-for="Ad" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Aciklama" class="form-label"></label>
+            <textarea asp-for="Aciklama" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Aciklama" class="text-danger small"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col">
+                <label asp-for="SureDakika" class="form-label"></label>
+                <input asp-for="SureDakika" class="form-control" />
+                <span asp-validation-for="SureDakika" class="text-danger small"></span>
+            </div>
+            <div class="col">
+                <label asp-for="Ucret" class="form-label"></label>
+                <input asp-for="Ucret" class="form-control" step="0.01" />
+                <span asp-validation-for="Ucret" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="Aktif" class="form-check-input" />
+            <label asp-for="Aktif" class="form-check-label"></label>
+        </div>
+        @if (!ekleme)
+        {
+            <p class="form-text">Süre/ücret değişikliği mevcut randevuları etkilemez; onlar alındıkları andaki değerleri saklar.</p>
+        }
+
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

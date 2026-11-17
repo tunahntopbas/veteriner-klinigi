@@ -1,0 +1,85 @@
+@*
+    ÖDEV 2.1 / 2.2 — Hekim ekleme/düzenleme.
+    Çoklu seçim: aynı name="UzmanlikIdleri" ile birden fazla checkbox → model binding int[] dizisine doldurur.
+*@
+@model VeterinerFormVM
+@{ var ekleme = Model.Id == 0; }
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(ekleme ? "Ekle" : "Duzenle")" asp-route-id="@(ekleme ? null : Model.Id)" method="post" class="card kart-golge">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <label asp-for="AdSoyad" class="form-label"></label>
+                <input asp-for="AdSoyad" class="form-control" />
+                <span asp-validation-for="AdSoyad" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Unvan" class="form-label"></label>
+                <input asp-for="Unvan" class="form-control" placeholder="Vet. Hek." />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Telefon" class="form-label"></label>
+                <input asp-for="Telefon" class="form-control" />
+                <span asp-validation-for="Telefon" class="text-danger small"></span>
+            </div>
+        </div>
+
+        @if (ekleme)
+        {
+            @* Hekimin giriş hesabı (AspNetUsers + "Veteriner" rolü) bu bilgilerle oluşturulur. *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Eposta" class="form-label"></label>
+                    <input asp-for="Eposta" class="form-control" />
+                    <span asp-validation-for="Eposta" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Sifre" class="form-label"></label>
+                    <input asp-for="Sifre" class="form-control" />
+                    <div class="form-text">Büyük/küçük harf, rakam ve sembol içermeli.</div>
+                    <span asp-validation-for="Sifre" class="text-danger small"></span>
+                </div>
+            </div>
+        }
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Uzmanlık alanları</label>
+                @foreach (var s in Model.UzmanlikSecenekleri)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="UzmanlikIdleri" value="@s.Value" id="uz_@s.Value" checked="@s.Selected" />
+                        <label class="form-check-label" for="uz_@s.Value">@s.Text</label>
+                    </div>
+                }
+            </div>
+            <div class="col-md-7">
+                <label class="form-label fw-semibold">Verebildiği hizmetler</label>
+                <div class="row">
+                    @foreach (var s in Model.HizmetSecenekleri)
+                    {
+                        <div class="col-sm-6 form-check">
+                            <input class="form-check-input" type="checkbox" name="HizmetIdleri" value="@s.Value" id="hz_@s.Value" checked="@s.Selected" />
+                            <label class="form-check-label" for="hz_@s.Value">@s.Text</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="Aktif" class="form-check-input" />
+            <label asp-for="Aktif" class="form-check-label"></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

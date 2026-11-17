@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +10,21 @@ using VeterinerKlinigi.Models;
 using VeterinerKlinigi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---------------------------------------------------------------
+// KÜLTÜR (dil/biçim) AYARI
+// Tarih ve gün adları Türkçe (tr-TR) görünsün. DİKKAT: tr-TR'de ondalık ayırıcı virgüldür,
+// ama tarayıcıdaki <input type="number"> ve jquery.validate NOKTA gönderir ("450.50").
+// Sunucu "450.50"yi virgül bekleyerek okursa ücret 45050 olur ya da hata verir.
+// Bu yüzden Türkçe kültürü kopyalayıp yalnızca sayı ayırıcılarını değiştiriyoruz.
+// ---------------------------------------------------------------
+var kultur = (CultureInfo)CultureInfo.GetCultureInfo("tr-TR").Clone();
+kultur.NumberFormat.NumberDecimalSeparator = ".";
+kultur.NumberFormat.NumberGroupSeparator = " ";
+kultur.NumberFormat.CurrencyDecimalSeparator = ".";
+kultur.NumberFormat.CurrencyGroupSeparator = " ";
+CultureInfo.DefaultThreadCurrentCulture = kultur;
+CultureInfo.DefaultThreadCurrentUICulture = kultur;
 
 // ---------------------------------------------------------------
 // 1) SERVİS KAYDI — builder.Build()'dan ÖNCE olmak zorunda.

@@ -158,7 +158,7 @@ public class HesapController : Controller
         if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Admin))
             return RedirectToAction("Index", "Panel", new { area = "Admin" });
         if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Veteriner))
-            return RedirectToAction("Index", "Randevu", new { area = "Veteriner" });
+            return RedirectToAction("Index", "Randevu", new { area = "Hekim" });
 
         return RedirectToAction("Index", "EvcilHayvan");
     }

@@ -1,0 +1,17 @@
+@* ÖDEV 4.3 / 4.4 — Tüm randevular, duruma göre filtre (?durum=Bekliyor). *@
+@model List<Randevu>
+@{
+    var secili = ViewData["Durum"] as RandevuDurumu?;
+}
+
+<h1 class="h3 mb-3">Tüm Randevular</h1>
+
+<div class="btn-group mb-3 flex-wrap" role="group" aria-label="Durum filtresi">
+    <a asp-action="Index" class="btn btn-outline-secondary @(secili is null ? "active" : "")">Hepsi</a>
+    @foreach (var d in Enum.GetValues<RandevuDurumu>())
+    {
+        <a asp-action="Index" asp-route-durum="@d" class="btn btn-outline-secondary @(secili == d ? "active" : "")">@RandevuServisi.DurumAdi(d)</a>
+    }
+</div>
+
+<partial name="_RandevuTablosu" model="Model" />

@@ -1,31 +1,44 @@
-html {
-  font-size: 14px;
+/* ==================================================================
+   Pati Veteriner Kliniği — tema (Bootstrap 5 üzerine küçük eklemeler)
+   ================================================================== */
+
+:root {
+  --vk-ana: #1f7a6d;        /* ana renk: yeşil-turkuaz */
+  --vk-ana-koyu: #155d53;
+  --vk-zemin: #f4f7f6;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
+html { font-size: 15px; position: relative; min-height: 100%; }
+body { background: var(--vk-zemin); margin-bottom: 70px; }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
+/* Bootstrap'in ana rengini kendi rengimizle değiştir */
+.btn-primary { --bs-btn-bg: var(--vk-ana); --bs-btn-border-color: var(--vk-ana);
+               --bs-btn-hover-bg: var(--vk-ana-koyu); --bs-btn-hover-border-color: var(--vk-ana-koyu);
+               --bs-btn-active-bg: var(--vk-ana-koyu); }
+.btn-outline-primary { --bs-btn-color: var(--vk-ana); --bs-btn-border-color: var(--vk-ana);
+                       --bs-btn-hover-bg: var(--vk-ana); --bs-btn-hover-border-color: var(--vk-ana); }
+a { color: var(--vk-ana); }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+.ust-menu { background: linear-gradient(90deg, var(--vk-ana-koyu), var(--vk-ana)); }
+.ust-menu .btn-link.nav-link { color: rgba(255,255,255,.75); text-decoration: none; }
 
-body {
-  margin-bottom: 60px;
-}
+.kart-golge { box-shadow: 0 1px 4px rgba(0,0,0,.08); border-radius: .6rem; }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
+/* Admin paneli özet kartları */
+.ozet-kart { border: 0; border-left: 4px solid var(--vk-ana); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.ozet-sayi { font-size: 1.9rem; font-weight: 700; color: var(--vk-ana-koyu); }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Evcil hayvan kartı */
+.hayvan-kart img, .hayvan-foto { object-fit: cover; height: 180px; width: 100%; border-radius: .6rem .6rem 0 0; }
+.hayvan-foto-yok { height: 180px; display: flex; align-items: center; justify-content: center;
+                   font-size: 4rem; background: #e3efec; border-radius: .6rem .6rem 0 0; }
+
+/* Randevu oluşturma: boş saat düğmeleri */
+.saat-dugmesi { min-width: 4.5rem; }
+.saat-dugmesi.active { background: var(--vk-ana); color: #fff; border-color: var(--vk-ana); }
+
+.footer { position: absolute; bottom: 0; width: 100%; line-height: 60px; background: #fff; }
+
+.btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus, .form-select:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(31,122,109,.45);
 }

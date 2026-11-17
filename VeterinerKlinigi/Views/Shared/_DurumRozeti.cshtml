@@ -1,0 +1,17 @@
+@*
+    PARTIAL VIEW — randevu durumunu renkli rozet olarak gösterir.
+    Üye, hekim ve admin sayfalarında aynı rozet kullanılır → tek dosya.
+    Kullanım: <partial name="_DurumRozeti" model="r.Durum" />
+*@
+@model RandevuDurumu
+@{
+    var renk = Model switch
+    {
+        RandevuDurumu.Bekliyor => "warning text-dark",
+        RandevuDurumu.Onaylandi => "primary",
+        RandevuDurumu.Tamamlandi => "success",
+        RandevuDurumu.Reddedildi => "danger",
+        _ => "secondary"
+    };
+}
+<span class="badge bg-@renk">@RandevuServisi.DurumAdi(Model)</span>

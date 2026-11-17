@@ -39,7 +39,7 @@
                         }
                         @if (User.IsInRole(Roller.Veteriner))
                         {
-                            <li class="nav-item"><a class="nav-link" asp-area="Veteriner" asp-controller="Randevu" asp-action="Index">Randevularım (Hekim)</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Hekim Paneli</a></li>
                         }
                         @if (User.IsInRole(Roller.Admin))
                         {

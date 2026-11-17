@@ -1,0 +1,85 @@
+@*
+    ÖDEV 2.3 — Hekimin müsaitlik saatleri. Sahipler SADECE bu aralıklara randevu alabilir
+    (kontrol: Services/MusaitlikServisi.cs).
+*@
+@model Veteriner
+@{
+    var form = (MusaitlikEkleVM)ViewData["MusaitlikFormu"]!;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">@Model.Unvan @Model.AdSoyad @(Model.Aktif ? "" : "(Pasif)")</h1>
+    <div>
+        <a asp-action="Duzenle" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
+        <a asp-action="Index" class="btn btn-link">← Liste</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card kart-golge">
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Giriş e-postası</dt><dd>@Model.Kullanici?.Email</dd>
+                    <dt>Telefon</dt><dd>@(Model.Telefon ?? "—")</dd>
+                    <dt>Uzmanlık alanları</dt><dd>@(Model.Uzmanliklar.Count == 0 ? "—" : string.Join(", ", Model.Uzmanliklar.Select(u => u.Ad)))</dd>
+                    <dt>Verebildiği hizmetler</dt><dd>@(Model.Hizmetler.Count == 0 ? "—" : string.Join(", ", Model.Hizmetler.Select(h => h.Ad)))</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card kart-golge">
+            <div class="card-body">
+                <h2 class="h5">Haftalık müsaitlik</h2>
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>Gün</th><th>Saat aralığı</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var m in Model.Musaitlikler.OrderBy(m => Array.IndexOf(GunAdlari.HaftaSirasi, m.Gun)).ThenBy(m => m.BaslangicSaati))
+                        {
+                            <tr>
+                                <td>@GunAdlari.Ad(m.Gun)</td>
+                                <td>@m.BaslangicSaati.ToString("HH:mm") – @m.BitisSaati.ToString("HH:mm")</td>
+                                <td class="text-end">
+                                    <form asp-action="MusaitlikSil" asp-route-veterinerId="@Model.Id" asp-route-musaitlikId="@m.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.Musaitlikler.Count == 0)
+                        {
+                            <tr><td colspan="3" class="text-muted">Henüz müsaitlik tanımlı değil — bu hekime randevu alınamaz.</td></tr>
+                        }
+                    </tbody>
+                </table>
+
+                <h3 class="h6 mt-3">Aralık ekle</h3>
+                <form asp-action="MusaitlikEkle" method="post" class="row g-2 align-items-end">
+                    <input type="hidden" name="VeterinerId" value="@form.VeterinerId" />
+                    <div class="col-sm-4">
+                        <label class="form-label small">Gün</label>
+                        <select name="Gun" class="form-select">
+                            @foreach (var g in GunAdlari.HaftaSirasi)
+                            {
+                                <option value="@((int)g)">@GunAdlari.Ad(g)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label small">Başlangıç</label>
+                        <input type="time" name="BaslangicSaati" value="09:00" class="form-control" required />
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label small">Bitiş</label>
+                        <input type="time" name="BitisSaati" value="17:00" class="form-control" required />
+                    </div>
+                    <div class="col-sm-2">
+                        <button type="submit" class="btn btn-primary w-100">Ekle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

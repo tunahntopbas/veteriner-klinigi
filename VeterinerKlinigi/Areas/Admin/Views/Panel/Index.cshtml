@@ -1,0 +1,21 @@
+@* ÖDEV Beklenen-AdminPaneli — özet kartlar ve yönetim kısayolları. Sayılar controller'da hesaplandı. *@
+<h1 class="h3 mb-4">Admin Paneli</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md"><div class="card ozet-kart"><div class="card-body"><div class="ozet-sayi">@ViewData["BekleyenSayisi"]</div><div>Onay bekleyen randevu</div></div></div></div>
+    <div class="col-6 col-md"><div class="card ozet-kart"><div class="card-body"><div class="ozet-sayi">@ViewData["BugunSayisi"]</div><div>Bugünkü onaylı randevu</div></div></div></div>
+    <div class="col-6 col-md"><div class="card ozet-kart"><div class="card-body"><div class="ozet-sayi">@ViewData["HekimSayisi"]</div><div>Aktif hekim</div></div></div></div>
+    <div class="col-6 col-md"><div class="card ozet-kart"><div class="card-body"><div class="ozet-sayi">@ViewData["HizmetSayisi"]</div><div>Aktif hizmet</div></div></div></div>
+    <div class="col-6 col-md"><div class="card ozet-kart"><div class="card-body"><div class="ozet-sayi">@ViewData["HayvanSayisi"]</div><div>Kayıtlı hayvan</div></div></div></div>
+</div>
+
+<div class="list-group kart-golge">
+    <a class="list-group-item list-group-item-action" asp-controller="Randevu" asp-action="Index" asp-route-durum="Bekliyor">📋 Onay bekleyen randevular</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Randevu" asp-action="Index">🗓️ Tüm randevular</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Veteriner" asp-action="Index">🩺 Veteriner hekimler (uzmanlık, hizmet, müsaitlik)</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Hizmet" asp-action="Index">💉 Hizmetler (süre ve ücret)</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Uzmanlik" asp-action="Index">🎓 Uzmanlık alanları</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Klinik" asp-action="Index">🏥 Klinik bilgileri ve çalışma saatleri</a>
+    <a class="list-group-item list-group-item-action" asp-area="" asp-controller="EvcilHayvan" asp-action="Index">🐾 Tüm evcil hayvanlar</a>
+    <a class="list-group-item list-group-item-action" asp-controller="Rapor" asp-action="Index">📊 Hizmet bazında randevu ve ciro raporu</a>
+</div>

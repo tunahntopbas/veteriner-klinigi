@@ -1,0 +1,54 @@
+@*
+    ÖDEV 1.1 / 1.2 — Klinik bilgileri ve haftalık çalışma saatleri.
+    Liste bağlama (list binding): asp-for="Saatler[i].AcilisSaati" →
+    name="Saatler[0].AcilisSaati" üretir; model binding bunu KlinikFormVM.Saatler listesine doldurur.
+*@
+@model KlinikFormVM
+
+<h1 class="h3 mb-3">Klinik ve Çalışma Saatleri</h1>
+
+<form asp-action="Index" method="post" class="card kart-golge">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label asp-for="Ad" class="form-label"></label>
+                <input asp-for="Ad" class="form-control" />
+                <span asp-validation-for="Ad" class="text-danger small"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Adres" class="form-label"></label>
+                <input asp-for="Adres" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Telefon" class="form-label"></label>
+                <input asp-for="Telefon" class="form-control" />
+            </div>
+        </div>
+
+        <h2 class="h5">Haftalık çalışma saatleri</h2>
+        <table class="table align-middle">
+            <thead><tr><th>Gün</th><th>Açılış</th><th>Kapanış</th><th>Kapalı</th></tr></thead>
+            <tbody>
+                @for (var i = 0; i < Model.Saatler.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @GunAdlari.Ad(Model.Saatler[i].Gun)
+                            <input type="hidden" asp-for="Saatler[i].Gun" />
+                        </td>
+                        <td><input asp-for="Saatler[i].AcilisSaati" type="time" class="form-control" /></td>
+                        <td><input asp-for="Saatler[i].KapanisSaati" type="time" class="form-control" /></td>
+                        <td><input asp-for="Saatler[i].Kapali" class="form-check-input" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-controller="Panel" asp-action="Index" class="btn btn-link">Panele dön</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

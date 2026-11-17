@@ -1,0 +1,78 @@
+@*
+    ÖDEV 5.1 / 5.2 — REST API'nin site İÇİNDEN tüketildiği yer.
+    Sayfa boş gelir; "Raporu getir" düğmesine basılınca jQuery
+    GET /api/raporlar/hizmet-ozeti?baslangic=...&bitis=... ucunu çağırır,
+    gelen JSON (DTO listesi) ile tabloyu sayfa yenilenmeden çizer.
+    Tarayıcı çerezi otomatik gönderdiği için Admin yetkisi API'de de geçerli.
+*@
+@{
+    var bugun = DateTime.Today;
+    var ayBasi = new DateTime(bugun.Year, bugun.Month, 1);
+}
+
+<h1 class="h3 mb-3">Hizmet Bazında Randevu ve Ciro Raporu</h1>
+
+<form id="raporFormu" class="row g-2 align-items-end mb-3">
+    <div class="col-sm-4 col-md-3">
+        <label for="baslangic" class="form-label">Başlangıç</label>
+        <input type="date" id="baslangic" class="form-control" value="@ayBasi.AddMonths(-1).ToString("yyyy-MM-dd")" required />
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <label for="bitis" class="form-label">Bitiş</label>
+        <input type="date" id="bitis" class="form-control" value="@ayBasi.AddMonths(2).AddDays(-1).ToString("yyyy-MM-dd")" required />
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Raporu getir</button>
+    </div>
+</form>
+
+<div id="raporHata" class="alert alert-danger d-none"></div>
+
+<table class="table kart-golge bg-white">
+    <thead class="table-light">
+        <tr><th>Hizmet</th><th class="text-end">Randevu sayısı</th><th class="text-end">Tamamlanan</th><th class="text-end">Ciro (TL)</th></tr>
+    </thead>
+    <tbody id="raporSatirlari"><tr><td colspan="4" class="text-muted">Tarih aralığı seçip "Raporu getir"e basın.</td></tr></tbody>
+    <tfoot id="raporToplam" class="fw-bold"></tfoot>
+</table>
+<p class="small text-muted">
+    Reddedilen ve iptal edilen randevular sayılmaz. Ciro yalnızca <strong>tamamlanan</strong> randevuların
+    (randevu anındaki) ücretlerinin toplamıdır. Kaynak: <code>GET /api/raporlar/hizmet-ozeti</code>
+</p>
+
+@section Scripts {
+    <script>
+        // Metni HTML'e güvenle yazmak için (XSS'e karşı): < > & karakterlerini kaçışlar.
+        function guvenli(metin) { return $('<div>').text(metin).html(); }
+        function tl(sayi) { return Number(sayi).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+        $('#raporFormu').on('submit', function (e) {
+            e.preventDefault();                       // formun sayfayı yenilemesini engelle
+            $('#raporHata').addClass('d-none');
+
+            // REST API çağrısı (AJAX). $.getJSON = GET + JSON cevabı otomatik nesneye çevirir.
+            $.getJSON('/api/raporlar/hizmet-ozeti', {
+                baslangic: $('#baslangic').val(),
+                bitis: $('#bitis').val()
+            })
+            .done(function (satirlar) {               // 200 OK
+                var govde = $('#raporSatirlari').empty();
+                var toplamSayi = 0, toplamTamam = 0, toplamCiro = 0;
+                if (satirlar.length === 0) {
+                    govde.append('<tr><td colspan="4" class="text-muted">Bu aralıkta randevu yok.</td></tr>');
+                }
+                $.each(satirlar, function (_, s) {
+                    toplamSayi += s.randevuSayisi; toplamTamam += s.tamamlananSayisi; toplamCiro += s.ciro;
+                    govde.append('<tr><td>' + guvenli(s.hizmetAdi) + '</td><td class="text-end">' + s.randevuSayisi +
+                        '</td><td class="text-end">' + s.tamamlananSayisi + '</td><td class="text-end">' + tl(s.ciro) + '</td></tr>');
+                });
+                $('#raporToplam').html('<tr><td>Toplam</td><td class="text-end">' + toplamSayi + '</td><td class="text-end">' +
+                    toplamTamam + '</td><td class="text-end">' + tl(toplamCiro) + '</td></tr>');
+            })
+            .fail(function (xhr) {                    // 400 / 401 / 403
+                var mesaj = (xhr.responseJSON && xhr.responseJSON.hata) || ('Hata: ' + xhr.status);
+                $('#raporHata').text(mesaj).removeClass('d-none');
+            });
+        }).trigger('submit');                         // sayfa açılınca bir kez çalıştır
+    </script>
+}
