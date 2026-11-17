@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VeterinerKlinigi.Data;
 using VeterinerKlinigi.Models;
+using VeterinerKlinigi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +66,23 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
+
+// ---- Servis katmanı (iş kuralları) ----
+// ÖDEV 6.3 — MVC controller'ları, REST API ve MCP araçları AYNI servisleri kullanır.
+//
+// Yaşam döngüsü (DI lifetime):
+//   AddScoped    → her HTTP isteği için BİR nesne. DbContext scoped olduğu için onu
+//                  kullanan servisler de scoped olmalı (Singleton bir servis scoped
+//                  DbContext'i tutarsa istekler arası veri karışır → hata).
+//   AddSingleton → uygulama boyunca TEK nesne. FotografServisi durum tutmaz, sadece
+//                  klasör yolunu bilir → tek nesne yeterli.
+builder.Services.AddSingleton<IFotografServisi, FotografServisi>();
+builder.Services.AddScoped<IKlinikServisi, KlinikServisi>();
+builder.Services.AddScoped<IHizmetServisi, HizmetServisi>();
+builder.Services.AddScoped<IUzmanlikServisi, UzmanlikServisi>();
+builder.Services.AddScoped<IVeterinerServisi, VeterinerServisi>();
+builder.Services.AddScoped<IEvcilHayvanServisi, EvcilHayvanServisi>();
+builder.Services.AddScoped<IAsiServisi, AsiServisi>();
 
 var app = builder.Build();
 
