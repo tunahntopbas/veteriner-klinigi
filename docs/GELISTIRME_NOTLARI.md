@@ -138,7 +138,8 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 11 | Uçtan uca tarayıcı testi, hata sayfası, tema düzeltmeleri, ekran görüntüleri | `HomeController.Durum`, `site.css`, `docs/ekran-goruntuleri/` | `d444ab5` |
 | 12 | **Hata düzeltmesi:** tamamlanan randevu saati boş sayılıyordu → `DoluSayilanDurumlar`'a eklendi. MCP Inspector çıktısı, SQL betiği | `MusaitlikServisi.cs:37`, `docs/veritabani-olusturma.sql` | `e6967d6` |
 | 13 | README raporu ve bu dosya | `README.md`, `docs/GELISTIRME_NOTLARI.md` | `8113fac` |
-| 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | (bu commit) |
+| 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
+| 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
 
 **Karşılaşılan sorunlar ve çözümleri** (sunumda "zorlandığın yer neresiydi?" sorusuna)
 - *Rapor sorgusu SQL'e çevrilemedi*: `GroupBy` içinde record constructor ve filtreli `Sum` EF Core'da çevrilemiyor.
