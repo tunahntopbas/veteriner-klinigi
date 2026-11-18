@@ -140,6 +140,7 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 13 | README raporu ve bu dosya | `README.md`, `docs/GELISTIRME_NOTLARI.md` | `8113fac` |
 | 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
 | 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
+| 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | — |
 
 **Karşılaşılan sorunlar ve çözümleri** (sunumda "zorlandığın yer neresiydi?" sorusuna)
 - *Rapor sorgusu SQL'e çevrilemedi*: `GroupBy` içinde record constructor ve filtreli `Sum` EF Core'da çevrilemiyor.
@@ -264,14 +265,33 @@ kurmaz, silmesi kolay ve hocanın bilgisayarında da aynı sürümle çalışır
 
 ---
 
-## 5. Sonraki Günler İçin Commit Fikirleri
+## 5. Kalan Takvim ve Arayüz Planı
 
-"En az 10 farklı günde 10 commit" şartı için kalan günlerde **gerçekten yapılan** küçük işler commit'lenir. Commit tarihleri
-değiştirilmez. Öneriler:
-- MCP istemcisinden (Claude Desktop veya Inspector arayüzü) kendi ekran görüntünü alıp README §7'ye eklemek.
-- Hekim paneline tarih filtresi; admin randevu listesine hekim/tarih filtresi.
-- Randevu listelerine sayfalama.
-- Ana sayfaya "yaklaşan aşılar" hatırlatma kartı (üye için).
-- Hizmet raporuna hekime göre kırılım (`GroupBy(r => r.Veteriner)`) ve yeni bir API ucu.
-- Muayene notunu üyenin randevu detayında göstermek / yazdırma görünümü.
-- Yorumları ve bu dosyayı sunuma göre gözden geçirmek.
+Teslim: **17.12.2026**. Son push en geç **16.12.2026**; teslimden sonra depoda değişiklik yapılmaz.
+SABİS'e yalnızca 3 satırlık .txt yüklenir: numara, ad soyad, depo adresi.
+
+"En az 10 farklı günde 10 commit" şartı için iş günlere bölünür, her gün yapılan iş o gün commit'lenir.
+Commit tarihleri değiştirilmez.
+
+**Sınırlar**
+- Bootstrap 5 + jQuery temel olarak kalır (ödevde teknoloji olarak istenmiş). Ek JS kütüphanesi eklenmez.
+- Daha özenli görünüm ana sayfa ve üye ekranlarında olur. Admin ve hekim panelleri sade, okunaklı ve hızlı kalır.
+- Backend (servisler, API, MCP) bu aşamada değişmez; değişirse uç durum testleri yeniden çalıştırılır.
+
+**İş listesi** (sıra önerilir, gün sayısı esnek)
+
+| # | İş | Not |
+|---|---|---|
+| 1 | Tasarım dili: renkler, yazı tipleri, boşluklar, buton/kart stilleri; yeni ana sayfa | `wwwroot/css/site.css` CSS değişkenleri, `_Layout.cshtml` |
+| 2 | Ana sayfada kaydırınca beliren bölümler | `IntersectionObserver` + CSS geçişleri, kütüphanesiz; `prefers-reduced-motion` açıksa animasyon yok |
+| 3 | Üye ekranları: hayvan kartları, aşı takvimi görünümü | `_HayvanKarti`, `EvcilHayvan/Detay` |
+| 4 | Randevu alma akışı: adım adım seçim (hayvan → hizmet → tarih → hekim/saat), boş saat ızgarası | `Randevu/Form.cshtml`; API çağrısı aynı kalır |
+| 5 | Hekim paneli: günlük görünüm, tarih filtresi | `Areas/Hekim` |
+| 6 | Admin paneli ve grafikli hizmet raporu | Grafik `<canvas>` ile elle çizilir ya da basit CSS çubukları |
+| 7 | Mobil uyum, form hata mesajlarının görünümü | Tüm formlar 400px genişlikte denenir |
+| 8 | MCP istemcisinden (Claude Desktop veya Inspector arayüzü) kendi ekran görüntüm | README §7 |
+| 9 | Derste yeni işlenen konular projeye uygun yerde gösterilir | Hangi konu hangi dosyada, bu dosyaya yazılır |
+| 10 | Son ekran görüntüleri, README kontrolü, sunum provası | `docs/ekran-goruntuleri/`, §4 soru-cevaplar |
+
+İhtiyaç olursa ek işler: randevu listelerine sayfalama, hizmet raporuna hekime göre kırılım (`GroupBy(r => r.Veteriner)`),
+üyenin randevu detayında muayene notunu görmesi.
