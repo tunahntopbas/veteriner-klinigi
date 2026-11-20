@@ -1,6 +1,7 @@
 ﻿@*
     ANA SAYFA
-    - Klinik, hizmetler ve hekimler sunucuda hazırlanır (HomeController.Index → AnaSayfaVM).
+    - Klinik, hizmetler ve hekimler sunucuda hazırlanır (HomeController.AnaSayfa → AnaSayfaVM).
+    - "/" adresi artık 3D giriş sahnesi (Views/Home/Index.cshtml); bu sayfaya oradan "Kliniğe gir" ile gelinir.
     - ÖDEV 5.1 — Sağdaki "boş saatler" fişi sayfa açıldıktan sonra jQuery ile REST API'den doldurulur:
       GET /api/veterinerler/uygun?hizmetId=..&tarih=..  (MVC formu ve MCP aracıyla AYNI servis: MusaitlikServisi)
     - Kaydırınca beliren bölümler: "belir" sınıfı + wwwroot/js/site.js (IntersectionObserver).
@@ -184,7 +185,7 @@
                 <div class="adim-no" aria-hidden="true">4</div>
                 <h3>Onayı bekleyin</h3>
                 <p>Hekim ya da klinik onayladığında randevunuz kesinleşir.</p>
-                <span class="durum-ornek">Bekliyor</span>
+                <span class="durum durum-bekliyor">Bekliyor</span>
             </li>
         </ol>
     </div>

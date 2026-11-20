@@ -1,0 +1,171 @@
+/* ==================================================================
+   GİRİŞ SAHNESİ ("/") — Views/Home/Index.cshtml + wwwroot/js/giris-sahnesi.js
+   ------------------------------------------------------------------
+   İki hâl var:
+   A) VARSAYILAN (durağan): <html> üzerinde "sahne-3d" sınıfı YOKSA.
+      WebGL yok, "hareketi azalt" açık ya da JS çalışmadı → modelin görüntüsü,
+      üç cümle ve "Kliniğe gir" kartı alt alta, normal sayfa gibi.
+   B) 3D: <html class="sahne-3d"> → uzun kaydırma yolu + yapışık sahne.
+      Tek giriş değişkeni: --ilerleme (0 → 1). JS her karede sahneye yazar.
+   ================================================================== */
+
+.giris-sayfasi { min-height: 100vh; }
+
+/* Üst şerit: marka + Atla. Her iki hâlde de görünür. */
+.giris-ust {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--b4) max(var(--b6), 4vw);
+}
+.giris-ust .marka-ad { font-size: 1.5rem; }
+.giris-atla { color: var(--metin); text-decoration: none; font-weight: 600; padding: var(--b2) var(--b4); border-radius: var(--kose-orta); border: 1px solid var(--cam-cizgi); background: var(--cam-zemin); -webkit-backdrop-filter: var(--cam-bulanik); backdrop-filter: var(--cam-bulanik); }
+.giris-atla:hover { color: #fff; border-color: var(--cizgi-guclu); }
+
+/* Cam yüzey tarifi (fişler + son kart). Bulanıklık desteklenmezse düz yarı opak yüzey. */
+.cam-fis, .son-kart {
+  background: var(--cam-zemin); border: 1px solid var(--cam-cizgi);
+  -webkit-backdrop-filter: var(--cam-bulanik); backdrop-filter: var(--cam-bulanik);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 20px 50px -24px rgba(0, 0, 0, .7);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .cam-fis, .son-kart { background: rgba(24, 50, 56, .92); }
+}
+
+
+/* ------------------------------------------------------------------
+   A) DURAĞAN HÂL (varsayılan)
+   ------------------------------------------------------------------ */
+.giris-sahne {
+  display: grid; justify-items: center; gap: var(--b8);
+  padding: calc(var(--b24) + var(--b4)) max(var(--b4), 4vw) var(--b16);
+  max-width: 46rem; margin-inline: auto; text-align: left;
+}
+.sahne-tuval, .fis-katmanlari, .kaydir-ipucu, .ilerleme-cubugu, .fis-notu { display: none; }
+.sahne-yedek { width: min(20rem, 70vw); height: auto;
+  /* Görüntünün kare kenarları zemindeki renk lekeleriyle çakışmasın: kenarları yumuşakça sil */
+  -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); }
+.giris-metinleri { display: grid; gap: var(--b6); width: 100%; }
+.giris-metni h1, .giris-metni h2 { font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; color: #fff; margin-bottom: var(--b3); }
+.giris-metni p { color: var(--soluk); font-size: 1.1rem; max-width: 42ch; margin: 0; }
+.son-kart { border-radius: var(--kose-buyuk); padding: var(--b8); width: 100%; }
+.son-kart h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); color: #fff; margin-bottom: var(--b2); }
+.son-kart p { color: var(--soluk); margin-bottom: var(--b6); }
+
+
+/* ------------------------------------------------------------------
+   B) 3D HÂL
+   ------------------------------------------------------------------ */
+
+/* Kaydırma yolu: 5 ekran boyu. Sahne bu yol boyunca ekrana yapışık kalır; kullanıcı
+   kaydırdıkça sahne yerinde durur, sadece --ilerleme değişir. */
+.sahne-3d .giris-yolu { height: 500vh; height: 500svh; }
+
+.sahne-3d .giris-sahne {
+  --ilerleme: 0;                       /* JS her karede günceller (0 = başlangıç, 1 = son) */
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;       /* svh: mobilde adres çubuğu açık/kapalıyken zıplamaz */
+  max-width: none; margin: 0; padding: 0;
+  display: block; overflow: hidden;
+  /* perspective: izleyicinin ekrana uzaklığı (px). 900px → translateZ(-900px) olan bir öğe
+     yarı boyutta görünür; translateZ(+900px)'e yaklaştıkça sonsuz büyür (kameranın içine girer).
+     Küçük değer = güçlü derinlik hissi, büyük değer = daha düz görüntü. */
+  perspective: 900px;
+  perspective-origin: 50% 45%;
+}
+.sahne-3d .sahne-tuval { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+.sahne-3d .sahne-yedek { display: none; }
+
+/* ---- Cam randevu fişleri ----
+   Hepsi ekranın ortasına sabitlenir, sonra kendi --x/--y/--z değerleriyle 3D uzayda yerleşir.
+   KAMERA HAREKETİ: gerçekte kamera değil fişler bize doğru gelir. --kamera, ilerleme 0 → 0,8 iken
+   0 → 3400px büyür ve her fişin derinliğine eklenir: z = --z + --kamera. En uzaktaki fiş (-2500)
+   bile sonda +900'e gelir; yani son kart açıldığında bütün fişler kameranın arkasında kalmıştır.
+     z ≈ -2500  → uzakta, küçük ve soluk
+     z ≈ 0      → ekran düzleminde, gerçek boyutunda
+     z > 200    → kameranın çok yakınında; burada hızla saydamlaşır ki "içinden geçtik" hissi olsun
+   Opaklık iki sınırın küçüğüdür (min):
+     uzaktan gelirken açılma:  (z + 2700) / 600  → 0..1
+     yakına gelince kaybolma:  (600 - z) / 400   → 1..0 (z = 600'de tamamen görünmez)
+   clamp(0, x, 1) değerleri 0 ile 1 arasında tutar. */
+.sahne-3d .fis-katmanlari {
+  --kamera: calc(clamp(0, var(--ilerleme) / .8, 1) * 3400);
+  display: block; position: absolute; left: 50%; top: 45%; width: 0; height: 0;
+  transform-style: preserve-3d;
+  /* Bütün fiş grubu kaydırdıkça hafifçe kendi etrafında döner → "dağılma" hissi */
+  transform: rotateZ(calc(var(--ilerleme) * 14deg));
+  pointer-events: none;
+}
+.sahne-3d .cam-fis {
+  --derinlik: calc(var(--z) + var(--kamera));
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: baseline; gap: var(--b2); white-space: nowrap;
+  padding: var(--b3) var(--b4); border-radius: 12px;
+  color: #fff; font-weight: 600; font-size: 1rem;
+  transform:
+    translate(-50%, -50%)
+    translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--derinlik) * 1px))
+    rotateZ(calc(var(--r) * 1deg))
+    rotateY(calc(var(--x) * -0.03deg));      /* kenardakiler merkeze doğru hafif dönük */
+  opacity: min(clamp(0, (var(--derinlik) + 2700) / 600, 1), clamp(0, (600 - var(--derinlik)) / 400, 1));
+  will-change: transform, opacity;           /* yalnızca bu 8 öğe; tarayıcı ayrı katmanda tutar */
+}
+.sahne-3d .cam-fis .veri { color: var(--safran); font-weight: 600; }
+.sahne-3d .cam-fis small { color: var(--soluk); font-weight: 500; font-size: .85em; }
+
+/* ---- Üç aşamalı metin ----
+   JS sahneye data-asama="0..3" yazar; eşleşen metin görünür. Geçiş CSS'te (opacity + kayma). */
+.sahne-3d .giris-metinleri {
+  position: absolute; left: max(var(--b6), 6vw); bottom: 12vh; width: min(34rem, 88vw);
+  display: block; z-index: 5;
+}
+.sahne-3d .giris-metni {
+  position: absolute; left: 0; bottom: 0; width: 100%;
+  opacity: 0; transform: translateY(24px); visibility: hidden;
+  transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .6s;
+}
+.sahne-3d .giris-sahne[data-asama="0"] .giris-metni[data-no="0"],
+.sahne-3d .giris-sahne[data-asama="1"] .giris-metni[data-no="1"],
+.sahne-3d .giris-sahne[data-asama="2"] .giris-metni[data-no="2"] {
+  opacity: 1; transform: none; visibility: visible; transition-delay: 0s;
+}
+
+/* ---- Son kart: dördüncü aşamada sağda belirir (model sola kayar) ---- */
+.sahne-3d .son-kart {
+  position: absolute; right: max(var(--b6), 7vw); top: 50%; width: min(28rem, 88vw); z-index: 6;
+  opacity: 0; visibility: hidden; transform: translateY(-50%) translateZ(-200px) scale(.94);
+  transition: opacity .7s ease, transform .8s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .7s;
+}
+.sahne-3d .giris-sahne[data-asama="3"] .son-kart {
+  opacity: 1; visibility: visible; transform: translateY(-50%); transition-delay: 0s;
+}
+
+/* ---- Küçük göstergeler ---- */
+.sahne-3d .kaydir-ipucu {
+  display: block; position: absolute; left: 50%; bottom: var(--b6); transform: translateX(-50%);
+  margin: 0; font-size: .85rem; color: var(--soluk); letter-spacing: .02em;
+  opacity: clamp(0, 1 - var(--ilerleme) * 25, 1);      /* ilk %4'te kaybolur */
+}
+.sahne-3d .kaydir-ipucu::after { content: ""; display: block; width: 1px; height: 2.2rem; margin: var(--b2) auto 0; background: linear-gradient(var(--soluk), transparent); }
+.sahne-3d .ilerleme-cubugu {
+  display: block; position: absolute; right: var(--b4); top: 30%; bottom: 30%; width: 2px;
+  background: var(--cizgi-guclu); border-radius: 2px; overflow: hidden;
+}
+.sahne-3d .ilerleme-cubugu span { display: block; height: 100%; background: var(--safran); transform-origin: top; transform: scaleY(var(--ilerleme)); }
+.sahne-3d .fis-notu { display: block; position: absolute; left: max(var(--b6), 6vw); bottom: var(--b4); margin: 0; font-size: .75rem; color: #6F8680; }
+
+/* ---- Mobil: daha az fiş (performans), metin ve kart altta ---- */
+@media (max-width: 767.98px) {
+  .sahne-3d .cam-fis.ek { display: none; }
+  .sahne-3d .cam-fis { font-size: .8rem; padding: var(--b2) var(--b3);
+    transform:
+      translate(-50%, -50%)
+      translate3d(calc(var(--x) * .42px), calc(var(--y) * .9px), calc(var(--derinlik) * 1px))
+      rotateZ(calc(var(--r) * 1deg)); }
+  .sahne-3d .giris-metinleri { left: var(--b6); right: var(--b6); width: auto; bottom: 15vh; }
+  .sahne-3d .giris-metni h1, .sahne-3d .giris-metni h2 { font-size: 1.9rem; }
+  .sahne-3d .giris-metni p { font-size: 1rem; }
+  .sahne-3d .son-kart { left: var(--b4); right: var(--b4); width: auto; top: auto; bottom: 8vh; padding: var(--b6);
+    transform: translateY(30px) scale(.96); }
+  .sahne-3d .giris-sahne[data-asama="3"] .son-kart { transform: none; }
+  .sahne-3d .fis-notu { display: none; }
+}

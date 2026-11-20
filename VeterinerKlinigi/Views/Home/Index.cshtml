@@ -1,0 +1,87 @@
+@*
+    GİRİŞ SAHNESİ ("/")
+    - Ortada Three.js ile çizilen, dönen 3D köpek modeli (wwwroot/js/giris-sahnesi.js).
+      Model: "Shiba Inu" — Quaternius, CC0 (kamu malı), https://poly.pizza/m/y4wdQpg767
+    - Önünde, derinlikte dizilmiş cam "randevu fişleri" (düz HTML + CSS 3D). Kaydırdıkça kamera
+      içlerinden geçiyormuş gibi yaklaşır ve dağılırlar.
+    - Ortadaki başlık üç aşamada değişir; sonunda tek bir cam kart ve "Kliniğe gir" butonu.
+
+    NASIL ÇALIŞIR? Sayfa 500vh uzunluğunda bir "yol"dur; sahne bu yol boyunca ekrana yapışık
+    (position: sticky) durur. Kaydırma oranı 0 → 1 arası bir sayıya (--ilerleme) çevrilir; hem
+    Three.js kamerası hem CSS katmanları bu tek sayıya bakar → ikisi hep senkron.
+
+    3D açılamazsa (WebGL yok / "hareketi azalt" açık / JS hatası): sahne durağan hâliyle görünür,
+    "Kliniğe gir" ve "Atla" her durumda çalışan sıradan bağlantılardır.
+*@
+@{
+    Layout = "_GirisLayout";
+    var anaSayfa = Url.Action("AnaSayfa", "Home");
+    var girisYapmis = User.Identity?.IsAuthenticated == true;
+}
+
+<header class="giris-ust">
+    <span class="marka-ad">Pati<span class="nokta">.</span></span>
+    @* Giriş yapmış kullanıcı sahneyi tekrar izlemek zorunda değil: "Atla" daha belirgin *@
+    <a class="@(girisYapmis ? "btn btn-primary btn-sm" : "giris-atla")" href="@anaSayfa">Atla</a>
+</header>
+
+<section class="giris-yolu" aria-label="Pati Veteriner Kliniği tanıtımı">
+    <div class="giris-sahne" id="girisSahne" data-asama="0">
+
+        @* WebGL tuvali (3D köpek). Ekran okuyucular için anlamı aşağıdaki metinlerde. *@
+        <canvas class="sahne-tuval" id="sahneTuval" aria-hidden="true"></canvas>
+        @* 3D açılamazsa gösterilen, modelden önceden alınmış görüntü *@
+        <img class="sahne-yedek" src="~/images/shiba-onizleme.png" alt="Pati Veteriner Kliniği'nin maskotu, alçak poligonlu bir Shiba Inu köpeği" width="480" height="480" />
+
+        @* Cam randevu fişleri. --x / --y: ekran merkezine göre konum (px), --z: derinlik (px, eksi = uzakta),
+           --r: hafif eğim (derece). Değerler unitless; CSS'te calc(... * 1px) ile birime çevrilir. *@
+        <div class="fis-katmanlari" aria-hidden="true">
+            <div class="cam-fis" style="--x:-430; --y:-170; --z:-2500; --r:-8"><span class="veri">09:30</span> Pamuk <small>Karma aşı · 20 dk</small></div>
+            <div class="cam-fis" style="--x:380;  --y:-210; --z:-2150; --r:6"><span class="veri">10:00</span> Boncuk <small>Diş temizliği · 60 dk</small></div>
+            <div class="cam-fis" style="--x:-360; --y:190;  --z:-1800; --r:5"><span class="veri">11:00</span> Karabaş <small>Genel muayene · 30 dk</small></div>
+            <div class="cam-fis" style="--x:420;  --y:150;  --z:-1450; --r:-5"><span class="veri">13:15</span> Tarçın <small>Kuduz aşısı · 15 dk</small></div>
+            <div class="cam-fis ek" style="--x:-160; --y:-260; --z:-1100; --r:3"><span class="veri">14:00</span> Zeytin <small>Dermatoloji · 40 dk</small></div>
+            <div class="cam-fis ek" style="--x:240;  --y:270;  --z:-800;  --r:-4"><span class="veri">15:30</span> Fıstık <small>Tıraş ve bakım · 90 dk</small></div>
+            <div class="cam-fis ek" style="--x:-470; --y:40;   --z:-500;  --r:7"><span class="veri">16:00</span> Duman <small>Egzotik muayene · 40 dk</small></div>
+            <div class="cam-fis ek" style="--x:460;  --y:-30;  --z:-250;  --r:-7"><span class="veri">16:45</span> Limon <small>Kontrol · 30 dk</small></div>
+        </div>
+
+        @* Üç aşamalı anlatım. data-no, JS'in sahneye yazdığı data-asama ile eşleşince görünür. *@
+        <div class="giris-metinleri">
+            <div class="giris-metni" data-no="0">
+                <h1>Muayene, aşı ve bakım tek çatı altında.</h1>
+                <p>@ViewData["KlinikAdi"]: <span class="veri">@ViewData["HekimSayisi"]</span> hekim, <span class="veri">@ViewData["HizmetSayisi"]</span> hizmet, @ViewData["KlinikAdres"].</p>
+            </div>
+            <div class="giris-metni" data-no="1">
+                <h2>Boş saati görün, randevunuzu alın.</h2>
+                <p>Hekimin müsaitliği ve hizmetin süresi hesaplanır; dolu saat listede çıkmaz.</p>
+            </div>
+            <div class="giris-metni" data-no="2">
+                <h2>Aşı takvimini asistanınıza sorun.</h2>
+                <p>"Pamuk'un bir sonraki aşısı ne zaman?" Cevap doğrudan klinik kayıtlarından gelir.</p>
+            </div>
+        </div>
+
+        @* Son aşama: tek cam kart *@
+        <div class="son-kart" id="sonKart" data-no="3">
+            <h2>@ViewData["KlinikAdi"]</h2>
+            <p>Hizmetlerimizi, hekimlerimizi ve bugünkü boş saatleri görün.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-lg" href="@anaSayfa">Kliniğe gir</a>
+                @if (!girisYapmis)
+                {
+                    <a class="btn btn-koyu btn-lg" asp-controller="Hesap" asp-action="Kayit">Üye ol</a>
+                }
+            </div>
+        </div>
+
+        <p class="kaydir-ipucu" aria-hidden="true">Kaydırın</p>
+        <div class="ilerleme-cubugu" aria-hidden="true"><span></span></div>
+        <p class="fis-notu" aria-hidden="true">Fişler örnektir</p>
+    </div>
+</section>
+
+@section Scripts {
+    @* type="module": import kullanır ve sayfa çizildikten sonra çalışır (defer gibi). *@
+    <script type="module" src="~/js/giris-sahnesi.js" asp-append-version="true"></script>
+}

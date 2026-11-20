@@ -23,9 +23,24 @@ public class HomeController : Controller
     }
 
     // GET /
+    // GİRİŞ SAHNESİ: 3D köpek modeli + kaydırmayla ilerleyen tanıtım (Views/Home/Index.cshtml,
+    // ayrı sade layout: _GirisLayout). Sonundaki "Kliniğe gir" butonu AnaSayfa'ya götürür.
+    // Sayılar veritabanından gelir; sahnede uydurma rakam olmasın.
+    public async Task<IActionResult> Index()
+    {
+        ViewData["Title"] = "Hoş geldiniz";
+        var klinik = await _klinik.GetirAsync();
+        ViewData["KlinikAdi"] = klinik.Ad;
+        ViewData["KlinikAdres"] = klinik.Adres;
+        ViewData["HizmetSayisi"] = (await _hizmetler.ListeleAsync(sadeceAktifler: true)).Count;
+        ViewData["HekimSayisi"] = (await _veterinerler.ListeleAsync(sadeceAktifler: true)).Count;
+        return View();
+    }
+
+    // GET /Home/AnaSayfa
     // Ana sayfa: klinik bilgisi + hizmetler + hekimler (sunucuda hazırlanır).
     // Boş saatler kutusu tarayıcıda REST API'den doldurulur (ÖDEV 5.1).
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> AnaSayfa()
     {
         ViewData["Title"] = "Ana Sayfa";
         ViewData["TamGenislik"] = true;   // Layout: bu sayfa kendi tam genişlik bölümlerini çizer

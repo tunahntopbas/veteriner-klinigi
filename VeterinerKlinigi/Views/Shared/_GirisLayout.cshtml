@@ -1,0 +1,40 @@
+@*
+    GİRİŞ SAHNESİ LAYOUT'U — yalnızca "/" (Home/Index) kullanır.
+    Normal _Layout'tan farkı: üst menü ve alt bilgi yok; tam ekran 3D sahne var.
+
+    Three.js bir "ES module" olarak yüklenir. Tarayıcıya "three" adının hangi dosya olduğunu
+    importmap söyler; böylece GLTFLoader.js içindeki `import ... from 'three'` satırı
+    projedeki yerel dosyayı bulur. Hiçbir dosya CDN'den gelmez → sunumda internet gerekmez.
+*@
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Pati Veteriner Kliniği</title>
+    <script>
+        // 3D sahne SADECE şu iki koşulda açılır: kullanıcı "hareketi azalt" istemiyor VE tarayıcı WebGL çizebiliyor.
+        // Karar burada, sayfa çizilmeden ÖNCE verilir; böylece önce düz sayfa görünüp sonra zıplamaz.
+        // Koşul tutmazsa <html>'e sınıf eklenmez → CSS sahnenin durağan hâlini (görsel + metinler + kart) gösterir.
+        (function () {
+            var hareketIstemiyor = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var webgl = false;
+            try { var c = document.createElement('canvas'); webgl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { }
+            if (!hareketIstemiyor && webgl) document.documentElement.classList.add('sahne-3d');
+        })();
+    </script>
+    @* DİKKAT: Başındaki "!" ASP.NET'in script Tag Helper'ını bu etiket için kapatır. .NET'in kendi
+       importmap Tag Helper'ı içeriği yazdığımız haritayı tanımayıp type özniteliğini siliyordu. *@
+    <!script type="importmap">
+        { "imports": { "three": "/lib/three/build/three.module.min.js" } }
+    </!script>
+    <link rel="preload" href="~/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/giris-sahnesi.css" asp-append-version="true" />
+</head>
+<body class="giris-sayfasi">
+    @RenderBody()
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

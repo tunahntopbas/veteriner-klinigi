@@ -133,7 +133,7 @@ public class HesapController : Controller
     public async Task<IActionResult> Cikis()
     {
         await _girisYoneticisi.SignOutAsync();
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("AnaSayfa", "Home");
     }
 
     // GET /Hesap/ErisimEngellendi — giriş yapmış ama rolü yetmeyen kullanıcı buraya düşer (403).
@@ -153,7 +153,7 @@ public class HesapController : Controller
     {
         var kullanici = await _kullaniciYoneticisi.FindByEmailAsync(eposta);
         if (kullanici is null)
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("AnaSayfa", "Home");
 
         if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Admin))
             return RedirectToAction("Index", "Panel", new { area = "Admin" });
