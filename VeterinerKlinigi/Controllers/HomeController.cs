@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using VeterinerKlinigi.Models;
 using VeterinerKlinigi.Services;
+using VeterinerKlinigi.ViewModels;
 
 namespace VeterinerKlinigi.Controllers;
 
@@ -12,18 +13,29 @@ public class HomeController : Controller
 {
     private readonly IKlinikServisi _klinik;
     private readonly IHizmetServisi _hizmetler;
+    private readonly IVeterinerServisi _veterinerler;
 
-    public HomeController(IKlinikServisi klinik, IHizmetServisi hizmetler)
+    public HomeController(IKlinikServisi klinik, IHizmetServisi hizmetler, IVeterinerServisi veterinerler)
     {
         _klinik = klinik;
         _hizmetler = hizmetler;
+        _veterinerler = veterinerler;
     }
 
     // GET /
+    // Ana sayfa: klinik bilgisi + hizmetler + hekimler (sunucuda hazırlanır).
+    // Boş saatler kutusu tarayıcıda REST API'den doldurulur (ÖDEV 5.1).
     public async Task<IActionResult> Index()
     {
         ViewData["Title"] = "Ana Sayfa";
-        return View(await _klinik.GetirAsync());   // klinik adı + çalışma saatleri
+        ViewData["TamGenislik"] = true;   // Layout: bu sayfa kendi tam genişlik bölümlerini çizer
+        var model = new AnaSayfaVM
+        {
+            Klinik = await _klinik.GetirAsync(),
+            Hizmetler = await _hizmetler.ListeleAsync(sadeceAktifler: true),
+            Hekimler = await _veterinerler.ListeleAsync(sadeceAktifler: true)
+        };
+        return View(model);
     }
 
     // GET /Home/Hizmetler — ÖDEV 1.2: hizmetler, süre ve ücretleriyle

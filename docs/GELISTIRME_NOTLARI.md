@@ -51,7 +51,7 @@ Durum: ✅ tamam · 🔁 kullanıcının süreç içinde yapacağı iş
 
 | Madde | İster | Durum | Nerede |
 |---|---|---|---|
-| 5.1 | REST API ile veritabanı iletişimi | ✅ | `Controllers/Api/*.cs` (5 controller). Okuma + yazma (`POST /api/randevular`). Site içi tüketim: `Views/Home/Hekimler.cshtml:22`, `Views/Randevu/Form.cshtml:80`, `Views/EvcilHayvan/Detay.cshtml:110`, `Areas/Admin/Views/Rapor/Index.cshtml:54` |
+| 5.1 | REST API ile veritabanı iletişimi | ✅ | `Controllers/Api/*.cs` (5 controller). Okuma + yazma (`POST /api/randevular`). Site içi tüketim: `Views/Home/Index.cshtml` (ana sayfadaki canlı boş saatler), `Views/Home/Hekimler.cshtml:22`, `Views/Randevu/Form.cshtml:80`, `Views/EvcilHayvan/Detay.cshtml:110`, `Areas/Admin/Views/Rapor/Index.cshtml:54` |
 | 5.2 | API'de LINQ ile filtreleme — **4 örneğin dördü de var** | ✅ | Tüm hekimler + uzmanlık filtresi `VeterinerlerApiController.cs:42` · Tarih+hizmet için uygun hekimler `VeterinerlerApiController.cs:75` → `MusaitlikServisi.cs:141` · Aşı geçmişi/yaklaşan `EvcilHayvanlarApiController` → `AsiServisi.cs:54` · Hizmete göre sayı + ciro (GroupBy) `RaporlarApiController` → `Services/RaporServisi.cs` |
 | 5.3 | Entity yerine DTO; doğru durum kodları | ✅ | `Dtos/ApiDtolari.cs:6`, `Dtos/DtoDonusturucu.cs` · 200/201 `RandevularApiController.cs:76` (`CreatedAtAction`) · 400 `:71` · 404 `:52` · 401/403 `Program.cs:80` · Belgeleme `/scalar` (`Program.cs:179-180`) |
 
@@ -69,7 +69,7 @@ Durum: ✅ tamam · 🔁 kullanıcının süreç içinde yapacağı iş
 
 | İster | Durum | Nerede |
 |---|---|---|
-| Front-End | ✅ | Razor + Bootstrap 5 + jQuery; `Views/Shared/_Layout.cshtml` (role göre menü), `wwwroot/css/site.css` |
+| Front-End | ✅ | Razor + Bootstrap 5 + jQuery; `Views/Shared/_Layout.cshtml` (role göre menü, mobilde offcanvas), `wwwroot/css/site.css` (tasarım dili), `wwwroot/js/site.js` (kaydırma animasyonu), `wwwroot/fonts/` |
 | Tam CRUD: Hizmet | ✅ | `Areas/Admin/Controllers/HizmetController.cs` (Index, Detay, Ekle, Duzenle, Sil) |
 | Tam CRUD: Veteriner | ✅ | `Areas/Admin/Controllers/VeterinerController.cs` |
 | Tam CRUD: Evcil Hayvan | ✅ | `Controllers/EvcilHayvanController.cs` |
@@ -140,7 +140,23 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 13 | README raporu ve bu dosya | `README.md`, `docs/GELISTIRME_NOTLARI.md` | `8113fac` |
 | 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
 | 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
-| 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | — |
+| 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | `c9ee040` |
+| 17 | 20.11: **Arayüz 1. gün.** Tasarım dili (renk ve yazı token'ları, Bootstrap teması), yeni üst bar (aktif sayfa çizgisi, mobilde sağdan açılan menü), veritabanından çalışma saatleri gösteren alt bilgi, yeni ana sayfa (canlı boş saatler fişi, hizmet/ücret listesi, hekimler, randevu adımları, asistan örneği, çalışma saatleri), kütüphanesiz kaydırma animasyonu | `wwwroot/css/site.css`, `wwwroot/js/site.js`, `wwwroot/fonts/`, `Views/Shared/_Layout.cshtml`, `Views/Home/Index.cshtml`, `ViewModels/AnaSayfaVM.cs`, `HomeController.Index` | (bu günün commit'leri) |
+
+**Arayüz tasarım kararları (20.11)**
+- *Fikir: "klinik randevu defteri".* Saat, tarih, süre ve ücretler eş genişlikli rakamlarla (JetBrains Mono) yazılır; alt alta hizalanır, defter gibi okunur.
+  Başlıklar Bricolage Grotesque, metin Inter.
+- *Renkler:* koyu petrol mürekkep `#13302F` (metin, koyu yüzeyler), hafif yeşile çalan kırık beyaz zemin `#F5F7F4`, adaçayı `#5E8C7B` (ikincil),
+  tek vurgu rengi safran `#E9A23B` (yalnızca birincil buton, seçili saat, "bugün" işareti). Randevu durum renkleri vurgu renginden ayrı.
+  Safran üstünde yazı beyaz değil koyu: beyaz yazı safran üstünde okunmuyor (kontrast yetersiz).
+- *Neden yazı tipleri yerel?* `wwwroot/fonts` altında woff2 dosyaları. Sunumda internet olmayabilir; CDN'e bağlı olsaydı sayfa varsayılan
+  fonta düşerdi. Türkçe harfler için "latin-ext" dosyası ayrı; tarayıcı yalnızca gerekeni indirir. Lisans: SIL Open Font License.
+- *Bootstrap silinmedi:* ödevde teknoloji olarak isteniyor. Kendi renklerimizi Bootstrap'in CSS değişkenlerine (`--bs-body-color`, buton
+  değişkenleri) bağladık; böylece henüz yenilenmeyen sayfalar da aynı renk ve fontu aldı.
+- *Kart yalnızca gerçek nesnelerde:* hizmetler fiyat listesi gibi satır satır, hekimler sade sütunlar. Kart görünümü canlı "boş saatler fişi"
+  ve hayvan kartı gibi tek başına bir nesne olan şeylerde.
+- *Hata düzeltmesi:* üst bara buzlu cam efekti (`backdrop-filter`) verince mobil menü ekran yerine üst bara göre konumlandı ve sayfa
+  yana taştı; efekt kaldırıldı, CSS'e not düşüldü.
 
 **Karşılaşılan sorunlar ve çözümleri** (sunumda "zorlandığın yer neresiydi?" sorusuna)
 - *Rapor sorgusu SQL'e çevrilemedi*: `GroupBy` içinde record constructor ve filtreli `Sum` EF Core'da çevrilemiyor.
@@ -245,6 +261,20 @@ onaylanmamış bir talep artık onaylanamaz; yalnızca reddedilebilir.
 Sunucunun yerel saatine (`DateTime.Now`). Klinik saati = sunucu yerel saati (Europe/Istanbul) kabul edildi; veritabanı sütunları
 da saat dilimsiz (`timestamp without time zone`). Uygulama UTC'de çalışan bir sunucuya taşınırsa saatler 3 saat kayar; o durumda
 `TimeZoneInfo.ConvertTime(DateTime.UtcNow, "Europe/Istanbul")` kullanılmalı. Tek klinik ve yerel çalıştırma için şu hâli yeterli.
+
+**S: Animasyonları nasıl yaptın? Kütüphane kullandın mı?**
+Kütüphane yok. `wwwroot/js/site.js` içinde tarayıcının kendi `IntersectionObserver` API'si var: `belir` sınıflı bölümler ekrana
+girince tarayıcı bir kez haber verir, biz de `gorundu` sınıfını ekleriz. Hareketin kendisi CSS'te (`transition`), `site.css` 8. bölüm.
+Kaydırma olayını her pikselde dinlemediğimiz için sayfa yorulmaz. Tek "orkestre" an "Randevu nasıl işler" bölümü: adımlar sırayla
+gelir, aradaki çizgi dolar (`transition-delay`). Güvenlik ağları:
+1. Başlangıç stili yalnızca `<html class="js">` varken uygulanır; JavaScript kapalıysa hiçbir içerik soluk kalmaz.
+2. Başlangıç tamamen görünmez değil (`opacity: .35`); animasyon çalışmasa da metin okunur.
+3. İşletim sisteminde "hareketi azalt" açıksa (`prefers-reduced-motion`) tüm animasyonlar kapanır.
+
+**S: Ana sayfadaki boş saatler nereden geliyor?**
+Sayfa açılınca jQuery `GET /api/veterinerler/uygun?hizmetId=1&tarih=...` çağırır (REST API'nin sitedeki bir tüketim yeri daha).
+Hangi gün gösterileceği sunucuda, veritabanındaki çalışma saatlerinden hesaplanır: bugün açıksa ve kapanışa muayene süresi kadar
+zaman varsa bugün, değilse sonraki açık gün. Saatleri hesaplayan servis, randevu formu ve MCP `uygun_saatler` aracıyla aynı.
 
 **S: Hizmetin fiyatı değişirse eski randevular ne olur?**
 Değişmez. Randevu oluşurken süre ve ücret randevu satırına kopyalanır (`RandevuServisi.cs:104-105`). Rapordaki ciro da bu kopyadan hesaplanır.

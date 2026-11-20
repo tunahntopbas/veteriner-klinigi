@@ -1,50 +1,307 @@
-﻿@model Klinik
+﻿@*
+    ANA SAYFA
+    - Klinik, hizmetler ve hekimler sunucuda hazırlanır (HomeController.Index → AnaSayfaVM).
+    - ÖDEV 5.1 — Sağdaki "boş saatler" fişi sayfa açıldıktan sonra jQuery ile REST API'den doldurulur:
+      GET /api/veterinerler/uygun?hizmetId=..&tarih=..  (MVC formu ve MCP aracıyla AYNI servis: MusaitlikServisi)
+    - Kaydırınca beliren bölümler: "belir" sınıfı + wwwroot/js/site.js (IntersectionObserver).
+*@
+@model AnaSayfaVM
+@{
+    var klinik = Model.Klinik;
+    var simdi = DateTime.Now;
 
-<div class="p-4 p-md-5 mb-4 bg-white kart-golge">
-    <h1 class="display-6 fw-bold">🐾 @Model.Ad</h1>
-    <p class="lead">Evcil dostlarınızın muayene, aşı ve bakım randevularını çevrimiçi alın; aşı takvimini kaçırmayın.</p>
-    @if (User.Identity?.IsAuthenticated != true)
-    {
-        <a asp-controller="Hesap" asp-action="Kayit" class="btn btn-primary btn-lg me-2">Üye Ol</a>
-        <a asp-controller="Hesap" asp-action="Giris" class="btn btn-outline-primary btn-lg">Giriş Yap</a>
-    }
-    else if (User.IsInRole(Roller.Uye))
-    {
-        <a asp-controller="Randevu" asp-action="Olustur" class="btn btn-primary btn-lg me-2">Randevu Al</a>
-        <a asp-controller="EvcilHayvan" asp-action="Index" class="btn btn-outline-primary btn-lg">Hayvanlarım</a>
-    }
-</div>
+    // Fişte gösterilecek hizmet: Genel Muayene (yoksa ilk aktif hizmet).
+    var muayene = Model.Hizmetler.FirstOrDefault(h => h.Ad == "Genel Muayene") ?? Model.Hizmetler.FirstOrDefault();
 
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card kart-golge h-100">
-            <div class="card-body">
-                <h2 class="h5">Çalışma saatleri</h2>
-                <table class="table table-sm mb-0">
-                    @foreach (var gun in GunAdlari.HaftaSirasi)
+    // Hangi günün boş saatleri gösterilsin? Bugün açıksa ve kapanışa en az hizmet süresi kadar zaman varsa bugün;
+    // değilse sonraki ilk açık gün. Klinik saatleri veritabanından geldiği için admin değiştirince bu da değişir.
+    DateOnly? hedefGun = null;
+    for (var i = 0; i < 8 && muayene is not null; i++)
+    {
+        var gun = DateOnly.FromDateTime(simdi).AddDays(i);
+        var c = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun.DayOfWeek);
+        if (c is null || c.Kapali) continue;
+        if (i == 0 && TimeOnly.FromDateTime(simdi).AddMinutes(muayene.SureDakika) > c.KapanisSaati) continue;
+        hedefGun = gun;
+        break;
+    }
+    var hedefGunMetni = hedefGun is null ? "" :
+        hedefGun == DateOnly.FromDateTime(simdi) ? "Bugün" :
+        hedefGun == DateOnly.FromDateTime(simdi).AddDays(1) ? "Yarın" :
+        GunAdlari.Ad(hedefGun.Value.DayOfWeek);
+
+    // Ziyaretçinin rolüne göre ana buton nereye gitsin?
+    var hekimMi = User.IsInRole(Roller.Veteriner);
+    var adminMi = User.IsInRole(Roller.Admin);
+
+    string BasHarfler(string adSoyad) =>
+        string.Concat(adSoyad.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0], new System.Globalization.CultureInfo("tr-TR"))));
+}
+
+@* ============================ HERO ============================ *@
+<section class="hero" aria-labelledby="heroBaslik">
+    <div class="container">
+        <div class="row g-4 g-lg-5 align-items-center">
+            <div class="col-lg-6">
+                <h1 id="heroBaslik" class="hero-baslik">Boş saati görün, randevunuzu hemen alın.</h1>
+                <p class="hero-metin">
+                    Hekimlerimizin müsait saatleri yanda canlı olarak listelenir. Üye olup hayvanınızı kaydettikten sonra
+                    randevu alabilir, aşı geçmişini ve sıradaki dozun tarihini tek sayfada görebilirsiniz.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    @if (hekimMi)
                     {
-                        var c = Model.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun);
-                        <tr>
-                            <td>@GunAdlari.Ad(gun)</td>
-                            <td class="text-end">@(c is null || c.Kapali ? "Kapalı" : $"{c.AcilisSaati:HH\\:mm} – {c.KapanisSaati:HH\\:mm}")</td>
-                        </tr>
+                        <a class="btn btn-primary btn-lg" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Randevularıma git</a>
                     }
+                    else if (adminMi)
+                    {
+                        <a class="btn btn-primary btn-lg" asp-area="Admin" asp-controller="Panel" asp-action="Index">Yönetim paneline git</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary btn-lg" asp-controller="Randevu" asp-action="Olustur">Randevu al</a>
+                    }
+                    <a class="btn btn-outline-primary btn-lg" href="#hizmetler">Hizmetler ve ücretler</a>
+                </div>
+                <p class="hero-adres"><strong>@klinik.Ad</strong><br />@klinik.Adres · <span class="veri">@klinik.Telefon</span></p>
+            </div>
+
+            <div class="col-lg-5 offset-lg-1">
+                @* Canlı boş saatler "randevu fişi". Veriyi aşağıdaki betik REST API'den getirir. *@
+                <article class="randevu-fisi" aria-labelledby="fisBaslik"
+                         id="bosSaatFisi"
+                         data-hizmet-id="@muayene?.Id"
+                         data-tarih="@hedefGun?.ToString("yyyy-MM-dd")">
+                    <header class="randevu-fisi-ust">
+                        <h2 id="fisBaslik"><span class="canli-isaret" aria-hidden="true"></span>@(hedefGun is null ? "Boş saatler" : $"{hedefGunMetni} boş saatler")</h2>
+                        @if (hedefGun is not null)
+                        {
+                            <time class="veri" datetime="@hedefGun.Value.ToString("yyyy-MM-dd")">@hedefGun.Value.ToString("dd.MM.yyyy")</time>
+                        }
+                    </header>
+                    <div class="randevu-fisi-govde" id="fisGovde" aria-live="polite">
+                        @if (hedefGun is null || muayene is null)
+                        {
+                            <p class="fis-bos mb-0">Önümüzdeki günlerde açık gün görünmüyor. Çalışma saatlerini aşağıda bulabilirsiniz.</p>
+                        }
+                        else
+                        {
+                            @* İskelet satırlar: veri gelene kadar düzen kaymasın *@
+                            @for (var i = 0; i < 3; i++)
+                            {
+                                <div class="fis-satir" aria-hidden="true">
+                                    <div class="iskelet" style="width:45%"></div>
+                                    <div class="iskelet" style="width:80%"></div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    @if (muayene is not null)
+                    {
+                        <footer class="randevu-fisi-alt">
+                            @muayene.Ad · <span class="veri">@muayene.SureDakika dk</span> · <span class="veri">@muayene.Ucret.ToString("N0") TL</span>. Diğer hizmetler için saatler randevu formunda.
+                        </footer>
+                    }
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ============================ HİZMETLER ============================ *@
+<section class="bolum" id="hizmetler" aria-labelledby="hizmetlerBaslik">
+    <div class="container belir">
+        <h2 id="hizmetlerBaslik" class="bolum-baslik">Hizmetler ve ücretler</h2>
+        <p class="bolum-giris">Süreler randevu planlamasında kullanılır: seçtiğiniz hizmet ne kadar sürüyorsa hekimin takviminde o kadar yer ayrılır.</p>
+        <ul class="hizmet-listesi">
+            @foreach (var h in Model.Hizmetler)
+            {
+                <li>
+                    <span class="hizmet-ad">@h.Ad</span>
+                    <span class="hizmet-olcu">
+                        <span class="ucret veri">@h.Ucret.ToString("N0") TL</span>
+                        <span class="sure veri">@h.SureDakika dk</span>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(h.Aciklama))
+                    {
+                        <span class="hizmet-aciklama">@h.Aciklama</span>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+</section>
+
+@* ============================ HEKİMLER ============================ *@
+<section class="bolum" aria-labelledby="hekimlerBaslik">
+    <div class="container belir">
+        <h2 id="hekimlerBaslik" class="bolum-baslik">Hekimlerimiz</h2>
+        <p class="bolum-giris">Her hekim yalnızca uzman olduğu hizmetleri verir. Randevu alırken seçtiğiniz hizmeti veren hekimler listelenir.</p>
+        <div class="hekim-listesi">
+            @foreach (var v in Model.Hekimler)
+            {
+                <article class="hekim">
+                    <div class="hekim-bas" aria-hidden="true">@BasHarfler(v.AdSoyad)</div>
+                    <h3>@v.AdSoyad</h3>
+                    <p class="unvan">@v.Unvan</p>
+                    <ul class="etiketler" aria-label="Uzmanlık alanları">
+                        @foreach (var u in v.Uzmanliklar.OrderBy(u => u.Ad))
+                        {
+                            <li>@u.Ad</li>
+                        }
+                    </ul>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+@* ============================ RANDEVU NASIL İŞLER ============================
+   Gerçek bir sıra olduğu için numaralı adımlar. Sayfanın TEK orkestre animasyonu burada:
+   bölüm görününce adımlar sırayla gelir, aralarındaki safran çizgi dolar. *@
+<section class="bolum" aria-labelledby="adimlarBaslik">
+    <div class="container">
+        <h2 id="adimlarBaslik" class="bolum-baslik">Randevu nasıl işler?</h2>
+        <p class="bolum-giris">Sistem, hekimin müsaitliğini ve diğer randevularını hizmet süresiyle birlikte kontrol eder; uygun olmayan saat zaten listede çıkmaz.</p>
+        <ol class="adimlar">
+            <li class="adim-cizgi" aria-hidden="true"></li>
+            <li class="adim">
+                <div class="adim-no" aria-hidden="true">1</div>
+                <h3>Hayvanınızı kaydedin</h3>
+                <p>Tür, ırk, doğum tarihi ve kilo. İsterseniz bir fotoğraf da ekleyin.</p>
+            </li>
+            <li class="adim">
+                <div class="adim-no" aria-hidden="true">2</div>
+                <h3>Hizmeti ve günü seçin</h3>
+                <p>Süre ve ücret seçim sırasında görünür.</p>
+            </li>
+            <li class="adim">
+                <div class="adim-no" aria-hidden="true">3</div>
+                <h3>Boş bir saate dokunun</h3>
+                <p>Yalnızca hekimin müsait ve boş olduğu başlangıç saatleri listelenir.</p>
+            </li>
+            <li class="adim">
+                <div class="adim-no" aria-hidden="true">4</div>
+                <h3>Onayı bekleyin</h3>
+                <p>Hekim ya da klinik onayladığında randevunuz kesinleşir.</p>
+                <span class="durum-ornek">Bekliyor</span>
+            </li>
+        </ol>
+    </div>
+</section>
+
+@* ============================ YAPAY ZEKÂ ASİSTANI (MCP) ============================ *@
+<section class="bolum" aria-labelledby="asistanBaslik">
+    <div class="container asistan belir">
+        <div>
+            <h2 id="asistanBaslik" class="bolum-baslik">Yapay zekâ asistanınıza sorun</h2>
+            <p class="okuma">
+                Klinik, bir <strong>MCP sunucusu</strong> içerir. MCP, Claude Desktop veya VS Code gibi bir yapay zekâ
+                asistanının bu uygulamadaki işlemleri sizin adınıza çağırmasını sağlar. Asistan yalnızca sizin hayvanlarınızı
+                ve randevularınızı görür.
+            </p>
+            <p class="okuma text-secondary">Bağlamak için Profil sayfanızdan bir erişim anahtarı oluşturun ve asistanınızın MCP ayarına ekleyin.</p>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn btn-koyu" asp-controller="Profil" asp-action="Index">Erişim anahtarı oluştur</a>
+            }
+            else
+            {
+                <a class="btn btn-koyu" asp-controller="Hesap" asp-action="Kayit">Üye olun ve bağlayın</a>
+            }
+        </div>
+        <figure class="konusma mb-0" aria-label="Örnek asistan konuşması">
+            <figcaption class="konusma-not">Örnek konuşma</figcaption>
+            <p class="balon balon-kullanici mb-0">Pamuk'un bir sonraki aşısı ne zaman?</p>
+            <p class="arac-cagri mb-0">araç: <b>asi_takvimi</b>(hayvanAdi: "Pamuk")</p>
+            <p class="balon balon-asistan mb-0">Pamuk'un sıradaki aşısı İç Parazit, 7 Aralık 2026'da. 17 gün kaldı. O hafta için muayene randevusu da alabilirim.</p>
+            <p class="balon balon-kullanici mb-0">Olur, 7 Aralık sabah 10'da Elif Hanım'a.</p>
+            <p class="arac-cagri mb-0">araç: <b>randevu_olustur</b>(hayvanAdi: "Pamuk", hizmetId: 1, veterinerId: 1, tarih: "2026-12-07", saat: "10:00")</p>
+            <p class="balon balon-asistan mb-0">Randevu oluşturuldu: 7 Aralık 10:00–10:30, Elif Kaya, Genel Muayene. Durumu "Bekliyor"; klinik onaylayınca kesinleşecek.</p>
+        </figure>
+    </div>
+</section>
+
+@* ============================ KLİNİK BİLGİSİ ============================ *@
+<section class="bolum" aria-labelledby="klinikBaslik">
+    <div class="container belir">
+        <div class="row g-4 g-lg-5">
+            <div class="col-md-6">
+                <h2 id="klinikBaslik" class="bolum-baslik">Çalışma saatleri</h2>
+                <table class="saat-tablosu">
+                    <caption class="visually-hidden">Haftalık çalışma saatleri</caption>
+                    <tbody>
+                        @foreach (var gun in GunAdlari.HaftaSirasi)
+                        {
+                            var c = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun);
+                            <tr class="@(gun == simdi.DayOfWeek ? "bugun" : null)">
+                                <th scope="row">@GunAdlari.Ad(gun)</th>
+                                @if (c is null || c.Kapali)
+                                {
+                                    <td class="kapali">Kapalı</td>
+                                }
+                                else
+                                {
+                                    <td class="veri">@c.AcilisSaati.ToString("HH:mm")–@c.KapanisSaati.ToString("HH:mm")</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card kart-golge h-100">
-            <div class="card-body">
-                <h2 class="h5">İletişim</h2>
-                <p class="mb-1">📍 @Model.Adres</p>
-                <p>📞 @Model.Telefon</p>
-                <h2 class="h5 mt-3">Yapay zekâ asistanıyla kullanın</h2>
-                <p class="small mb-0">
-                    Klinik, bir <strong>MCP sunucusu</strong> içerir. Profil sayfanızdan erişim anahtarı üretip
-                    Claude Desktop veya VS Code'a bağlayın; "Pamuk'un bir sonraki aşısı ne zaman?" diye sorun.
-                </p>
+            <div class="col-md-6">
+                <h2 class="bolum-baslik">Adres</h2>
+                <p class="mb-1 fs-5">@klinik.Ad</p>
+                <p class="mb-1">@klinik.Adres</p>
+                <p class="veri">@klinik.Telefon</p>
+                <p class="text-secondary okuma mt-4">Acil durumlarda randevu beklemeden kliniği arayın. Çevrimiçi randevular hekim ya da klinik onayladığında kesinleşir.</p>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+@section Scripts {
+    <script>
+        // ------------------------------------------------------------------
+        // ÖDEV 5.1 — REST API tüketimi: canlı boş saatler fişi.
+        // GET /api/veterinerler/uygun → [{ veterinerId, adSoyad, unvan, uzmanliklar, bosSaatler: ["09:00", ...] }]
+        // Cevap DTO olduğu için (UygunHekimDto) burada sadece gösteriyoruz; kural sunucuda.
+        // ------------------------------------------------------------------
+        (function () {
+            var fis = $('#bosSaatFisi');
+            var hizmetId = fis.data('hizmet-id');
+            var tarih = fis.data('tarih');
+            if (!hizmetId || !tarih) return;      // açık gün yoksa sunucu zaten boş durumu yazdı
+
+            var govde = $('#fisGovde');
+            var randevuAdresi = '@Url.Action("Olustur", "Randevu", new { area = "" })';
+            function guvenli(m) { return $('<div>').text(m ?? '').html(); }   // XSS'e karşı metni kaçır
+
+            $.getJSON('/api/veterinerler/uygun', { hizmetId: hizmetId, tarih: tarih })
+                .done(function (hekimler) {
+                    govde.empty();
+                    var dolu = hekimler.filter(function (h) { return h.bosSaatler.length > 0; });
+                    if (dolu.length === 0) {
+                        govde.append('<p class="fis-bos mb-0">Bu gün için boş saat kalmadı. Randevu formundan başka bir gün seçebilirsiniz.</p>');
+                        return;
+                    }
+                    $.each(dolu, function (_, h) {
+                        var ilkSaatler = h.bosSaatler.slice(0, 5);
+                        var kalan = h.bosSaatler.length - ilkSaatler.length;
+                        var cipler = $.map(ilkSaatler, function (s) {
+                            return '<a class="saat-cipi" href="' + randevuAdresi + '" aria-label="' + guvenli(h.adSoyad) + ', ' + s + '">' + s + '</a>';
+                        }).join('');
+                        if (kalan > 0) cipler += '<span class="saat-cipi-fazla">+' + kalan + ' saat daha</span>';
+                        govde.append(
+                            '<div class="fis-satir">' +
+                                '<div class="fis-hekim"><strong>' + guvenli(h.adSoyad) + '</strong><span>' + guvenli(h.uzmanliklar.join(', ')) + '</span></div>' +
+                                '<div class="saat-cipleri">' + cipler + '</div>' +
+                            '</div>');
+                    });
+                })
+                .fail(function () {
+                    govde.html('<p class="fis-bos mb-0">Boş saatler şu an alınamadı. Randevu formundan güncel saatleri görebilirsiniz.</p>');
+                });
+        })();
+    </script>
+}
