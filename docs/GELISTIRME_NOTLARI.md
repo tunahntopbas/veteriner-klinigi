@@ -141,6 +141,7 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
 | 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
 | 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | `c9ee040` |
+| 18 | 20.11: **3D giriş sahnesi + koyu cam tema.** "/" adresinde Three.js ile dönen Shiba Inu modeli, kaydırmayla yaklaşan cam randevu fişleri, 3 aşamalı anlatım ve "Kliniğe gir" kartı; WebGL yoksa veya "hareketi azalt" açıksa durağan görünüm. Tüm site koyu tema, seçici cam efekti. Ana sayfa `Home/AnaSayfa`'ya taşındı | `Views/Home/Index.cshtml`, `Views/Shared/_GirisLayout.cshtml`, `wwwroot/js/giris-sahnesi.js`, `wwwroot/css/giris-sahnesi.css`, `wwwroot/lib/three/`, `wwwroot/models/`, `wwwroot/images/`, `wwwroot/css/site.css` | (bu günün commit'leri) |
 | 17 | 20.11: **Arayüz 1. gün.** Tasarım dili (renk ve yazı token'ları, Bootstrap teması), yeni üst bar (aktif sayfa çizgisi, mobilde sağdan açılan menü), veritabanından çalışma saatleri gösteren alt bilgi, yeni ana sayfa (canlı boş saatler fişi, hizmet/ücret listesi, hekimler, randevu adımları, asistan örneği, çalışma saatleri), kütüphanesiz kaydırma animasyonu | `wwwroot/css/site.css`, `wwwroot/js/site.js`, `wwwroot/fonts/`, `Views/Shared/_Layout.cshtml`, `Views/Home/Index.cshtml`, `ViewModels/AnaSayfaVM.cs`, `HomeController.Index` | (bu günün commit'leri) |
 
 **Arayüz tasarım kararları (20.11)**
@@ -157,6 +158,22 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
   ve hayvan kartı gibi tek başına bir nesne olan şeylerde.
 - *Hata düzeltmesi:* üst bara buzlu cam efekti (`backdrop-filter`) verince mobil menü ekran yerine üst bara göre konumlandı ve sayfa
   yana taştı; efekt kaldırıldı, CSS'e not düşüldü.
+
+**Güncelleme (20.11, ikinci tur): 3D giriş sahnesi + koyu cam tema** — kullanıcının isteğiyle.
+- *Koyu tema:* `<html data-bs-theme="dark">` ile Bootstrap'in kendi koyu modu açıldı; değişkenleri kendi token'larımıza bağladık
+  (zemin `#0B1A1A`, yüzey `#12262A`, metin `#E6EFEC`, soluk metin `#9DB3AD`, vurgu yine tek renk: safran `#F0B24A`).
+  Böylece formlar, tablolar, dropdown'lar tek tek yazmadan koyu geldi. Açık temaya özel sınıflar (`bg-white`, `table-light`,
+  `bg-light text-dark`) sayfalardan temizlendi. Randevu durum rozetleri koyu zeminde okunacak şekilde yeniden renklendirildi (`.durum-*`).
+- *Cam (glass) SEÇİCİ:* yalnızca üst bar, mobil menü, ana sayfadaki canlı boş saatler fişi ve giriş sahnesindeki fişler/kart.
+  Formlar ve tablolar düz koyu yüzey: her şey cam olursa metin okunmaz ve efekt ucuzlar. Cam görünsün diye zeminde çok bulanık,
+  sabit renk lekeleri var (`body::before`). Tarayıcı `backdrop-filter` desteklemiyorsa `@supports not` ile düz yarı opak yüzey.
+- *Üst bardaki cam:* bulanıklık üst barın kendisine değil `::before` katmanına verildi (yukarıdaki offcanvas hatası tekrar olmasın).
+- *Rotalar:* `/` artık giriş sahnesi (`HomeController.Index`, ayrı `_GirisLayout`), eski ana sayfa `Home/AnaSayfa`. Logo, giriş/çıkış
+  sonrası yönlendirmeler ve hata sayfalarındaki "Ana sayfaya dön" bağlantıları `AnaSayfa`'ya gider.
+- *3D için kütüphane:* Three.js r170, `wwwroot/lib/three` (MIT). Model: Quaternius "Shiba Inu", CC0, `wwwroot/models/shiba-inu.glb`
+  (0,85 MB, 1812 üçgen, Idle/Walk gibi animasyonlarla). Kaydırma için ek kütüphane yok (GSAP kullanılmadı).
+- *Hata düzeltmesi:* .NET'in importmap Tag Helper'ı elle yazdığımız `<script type="importmap">`'in `type` özniteliğini siliyordu;
+  `<!script>` ile o etiket için Tag Helper kapatıldı (`_GirisLayout.cshtml`).
 
 **Karşılaşılan sorunlar ve çözümleri** (sunumda "zorlandığın yer neresiydi?" sorusuna)
 - *Rapor sorgusu SQL'e çevrilemedi*: `GroupBy` içinde record constructor ve filtreli `Sum` EF Core'da çevrilemiyor.
@@ -263,13 +280,33 @@ da saat dilimsiz (`timestamp without time zone`). Uygulama UTC'de çalışan bir
 `TimeZoneInfo.ConvertTime(DateTime.UtcNow, "Europe/Istanbul")` kullanılmalı. Tek klinik ve yerel çalıştırma için şu hâli yeterli.
 
 **S: Animasyonları nasıl yaptın? Kütüphane kullandın mı?**
-Kütüphane yok. `wwwroot/js/site.js` içinde tarayıcının kendi `IntersectionObserver` API'si var: `belir` sınıflı bölümler ekrana
+İki ayrı yer var. Giriş sahnesi (`/`) Three.js kullanır (aşağıdaki soru). Ana sayfadaki animasyonlarda kütüphane yok. `wwwroot/js/site.js` içinde tarayıcının kendi `IntersectionObserver` API'si var: `belir` sınıflı bölümler ekrana
 girince tarayıcı bir kez haber verir, biz de `gorundu` sınıfını ekleriz. Hareketin kendisi CSS'te (`transition`), `site.css` 8. bölüm.
 Kaydırma olayını her pikselde dinlemediğimiz için sayfa yorulmaz. Tek "orkestre" an "Randevu nasıl işler" bölümü: adımlar sırayla
 gelir, aradaki çizgi dolar (`transition-delay`). Güvenlik ağları:
 1. Başlangıç stili yalnızca `<html class="js">` varken uygulanır; JavaScript kapalıysa hiçbir içerik soluk kalmaz.
 2. Başlangıç tamamen görünmez değil (`opacity: .35`); animasyon çalışmasa da metin okunur.
 3. İşletim sisteminde "hareketi azalt" açıksa (`prefers-reduced-motion`) tüm animasyonlar kapanır.
+
+**S: 3D sahneyi nasıl yaptın? Model nereden, lisansı ne?**
+- *Model:* "Shiba Inu", Quaternius'un alçak poligonlu hayvan paketinden; poly.pizza üzerinden indirildi
+  (https://poly.pizza/m/y4wdQpg767). Lisansı **CC0 1.0**: kamu malı, atıf zorunlu değil ama README'de belirttik.
+  Dosya `wwwroot/models/shiba-inu.glb` (glTF ikili biçimi: geometri + malzeme + iskelet animasyonları tek dosyada).
+- *Çizim:* Three.js (`wwwroot/lib/three`, CDN değil → internet gerekmez). `GLTFLoader` modeli yükler; `AnimationMixer` modeldeki
+  hazır animasyonları oynatır (aşamaya göre Idle → Walk → Idle_2_HeadLow → Idle_2, `crossFadeTo` ile yumuşak geçiş).
+  Işık klasik 3 nokta: ana ışık (gölge düşürür), dolgu ışığı, arkadan adaçayı ve safran renkli kenar ışıkları. Zemin yalnızca gölgeyi
+  gösteren saydam bir düzlem (`ShadowMaterial`).
+- *Kaydırma:* sayfa 500vh uzunluğunda; sahne `position: sticky` ile ekrana yapışık kalır. JS kaydırma konumunu 0–1 arası bir
+  ilerleme sayısına çevirir; her karede gösterilen değer hedefe yumuşakça yaklaşır (lerp). Bu TEK sayı hem Three.js kamerasını
+  (yörünge yarıçapı, yükseklik, açı), modelin dönüşünü, ışık şiddetini hem de CSS'teki cam fişleri (`--ilerleme` değişkeni) yönetir.
+- *Cam fişler:* düz HTML. CSS 3D: kapsayıcıda `perspective: 900px`, her fişin `translate3d(x, y, z)` değeri var; `--kamera`
+  ilerledikçe her fişin z değerine eklenir, yani fişler bize doğru gelip kameranın "içinden" geçer. Opaklık
+  `min(uzaktan açılma, yakında kaybolma)` formülüyle CSS'te hesaplanır (`wwwroot/css/giris-sahnesi.css`, yorumlarda ayrıntı).
+- *Performans:* piksel oranı en fazla 2 (mobilde 1,5); sekme arka plandayken (`visibilitychange`) ve sahne ekrandan çıkınca
+  (`IntersectionObserver`) çizim durur; sayfadan çıkarken GPU kaynakları `dispose` edilir. Mobilde fiş sayısı 8'den 4'e iner.
+- *Yedek:* Tarayıcı WebGL çizemiyorsa veya "hareketi azalt" açıksa 3D hiç başlamaz; modelden önceden alınmış bir görüntü, üç cümle ve
+  "Kliniğe gir" kartı normal sayfa gibi alt alta görünür. Model yüklenemezse ya da JS hata verirse de aynı görünüme düşer.
+  "Atla" ve "Kliniğe gir" sıradan bağlantılar olduğu için her durumda çalışır.
 
 **S: Ana sayfadaki boş saatler nereden geliyor?**
 Sayfa açılınca jQuery `GET /api/veterinerler/uygun?hizmetId=1&tarih=...` çağırır (REST API'nin sitedeki bir tüketim yeri daha).

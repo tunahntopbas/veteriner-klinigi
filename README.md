@@ -23,6 +23,7 @@
 9. [Kurulum ve Çalıştırma](#9-kurulum-ve-çalıştırma)
 10. [Demo Hesapları](#10-demo-hesapları)
 11. [Proje Yapısı](#11-proje-yapısı)
+12. [Kullanılan Dış Kaynaklar ve Lisanslar](#12-kullanılan-dış-kaynaklar-ve-lisanslar)
 
 ---
 
@@ -580,5 +581,18 @@ veteriner-klinigi/
     ├── Areas/Admin/            Admin paneli
     ├── Areas/Hekim/            Veteriner hekim paneli
     ├── Views/                  Razor görünümleri ve partial'lar
-    └── wwwroot/                CSS, JS, Bootstrap, jQuery
+    └── wwwroot/                CSS, JS, Bootstrap, jQuery, Three.js, yazı tipleri, 3D model
 ```
+
+---
+
+## 12. Kullanılan Dış Kaynaklar ve Lisanslar
+
+Tüm dosyalar projenin içindedir (`wwwroot/`); uygulama çalışırken internete bağlanmaz.
+
+| Kaynak | Nerede | Lisans |
+|---|---|---|
+| Bootstrap 5.3, jQuery, jQuery Validation | `wwwroot/lib/` | MIT |
+| [Three.js](https://threejs.org) r170 (giriş sahnesindeki 3D çizim) | `wwwroot/lib/three/` | MIT |
+| 3D model: "Shiba Inu", [Quaternius](https://quaternius.com), [poly.pizza/m/y4wdQpg767](https://poly.pizza/m/y4wdQpg767) | `wwwroot/models/shiba-inu.glb` | CC0 1.0 (kamu malı) |
+| Yazı tipleri: Bricolage Grotesque, Inter, JetBrains Mono | `wwwroot/fonts/` | SIL Open Font License 1.1 |
