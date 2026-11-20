@@ -1,52 +1,400 @@
 /* ==================================================================
-   Pati Veteriner Kliniği — tema (Bootstrap 5 üzerine küçük eklemeler)
+   Pati Veteriner Kliniği — TASARIM DİLİ
+   ------------------------------------------------------------------
+   Fikir: "klinik randevu defteri". Saatler ve ücretler defterdeki gibi
+   eş genişlikli (mono) rakamlarla yazılır; zemin hafif yeşile çalan kırık
+   beyaz, metin koyu petrol mürekkebi, tek vurgu rengi safran (randevu al,
+   seçili saat). Kart yalnızca gerçekten ayrı bir nesne olan şeylerde
+   (hayvan kartı, randevu kartı); listeler ve tablolar kartsız.
+
+   Bootstrap 5 SİLİNMEDİ (ödevde teknoloji olarak isteniyor). Onu kendi
+   CSS değişkenleri (--bs-*) üzerinden kendi renk ve fontlarımıza bağlıyoruz;
+   böylece tüm sayfalar (formlar, tablolar, butonlar) aynı dili konuşur.
    ================================================================== */
 
-:root {
-  --vk-ana: #1f7a6d;        /* ana renk: yeşil-turkuaz */
-  --vk-ana-koyu: #155d53;
-  --vk-zemin: #f4f7f6;
+
+/* ------------------------------------------------------------------
+   1) YAZI TİPLERİ — yerel dosyalardan (wwwroot/fonts)
+   NEDEN YEREL? Sunum günü internet olmayabilir; Google Fonts'a bağlı
+   kalsaydık sayfa varsayılan fonta düşerdi. Dosyalar "variable font":
+   tek dosya tüm kalınlıkları (100–900) içerir.
+   Türkçe harfler (ş, ğ, İ) "latin-ext" dosyasında; tarayıcı unicode-range'e
+   bakıp yalnızca gereken dosyayı indirir.
+   Lisans: üçü de SIL Open Font License (ücretsiz, gömülebilir).
+   ------------------------------------------------------------------ */
+@font-face {
+  font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/bricolage-grotesque-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-html { font-size: 15px; }
-/* Footer her zaman sayfanın altında: body dikey flex, main kalan alanı doldurur */
-body { background: var(--vk-zemin); min-height: 100vh; display: flex; flex-direction: column; }
-body > .container { flex: 1 0 auto; }
 
-/* Bootstrap'in ana rengini kendi rengimizle değiştir */
-.btn-primary { --bs-btn-bg: var(--vk-ana); --bs-btn-border-color: var(--vk-ana);
-               --bs-btn-hover-bg: var(--vk-ana-koyu); --bs-btn-hover-border-color: var(--vk-ana-koyu);
-               --bs-btn-active-bg: var(--vk-ana-koyu); }
-.btn-outline-primary { --bs-btn-color: var(--vk-ana); --bs-btn-border-color: var(--vk-ana);
-                       --bs-btn-hover-bg: var(--vk-ana); --bs-btn-hover-border-color: var(--vk-ana); }
-a { color: var(--vk-ana); }
+/* ------------------------------------------------------------------
+   2) TOKEN'LAR — her renk ve ölçü TEK yerden gelir.
+   Boşluklar 4px tabanlı (--b1 = 4px, --b2 = 8px ...).
+   ------------------------------------------------------------------ */
+:root {
+  /* Renkler */
+  --murekkep: #13302F;   /* ana metin, üst bar yazısı, koyu yüzeyler */
+  --adacayi: #5E8C7B;    /* ikincil: etiketler, ince vurgular */
+  --adacayi-acik: #E4EDE8;
+  --safran: #E9A23B;     /* TEK vurgu rengi: birincil buton, seçili saat */
+  --safran-koyu: #D18D27;
+  --zemin: #F5F7F4;      /* sayfa zemini: hafif yeşile çalan kırık beyaz */
+  --yuzey: #FFFFFF;
+  --cizgi: #D9E1DC;
+  --soluk: #5B6B66;      /* ikincil metin — beyaz/zemin üzerinde AA kontrast */
 
-.ust-menu { background: linear-gradient(90deg, var(--vk-ana-koyu), var(--vk-ana)); }
-.ust-menu .btn-link.nav-link { color: rgba(255,255,255,.75); text-decoration: none; }
+  /* Durum renkleri (randevu rozetleri) — vurgu renginden ayrı tutulur */
+  --durum-bekliyor: #A86A00;
+  --durum-onaylandi: #1E7B4F;
+  --durum-reddedildi: #B3261E;
+  --durum-tamamlandi: #13302F;
+  --durum-iptal: #6B7570;
 
-.kart-golge { box-shadow: 0 1px 4px rgba(0,0,0,.08); border-radius: .6rem; }
+  /* Yazı */
+  --yazi-baslik: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --yazi-govde: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --yazi-veri: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-/* Admin paneli özet kartları */
-.ozet-kart { border: 0; border-left: 4px solid var(--vk-ana); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-.ozet-sayi { font-size: 1.9rem; font-weight: 700; color: var(--vk-ana-koyu); }
+  /* Boşluk ölçeği (4px taban) */
+  --b1: .25rem; --b2: .5rem; --b3: .75rem; --b4: 1rem; --b6: 1.5rem; --b8: 2rem; --b12: 3rem; --b16: 4rem; --b24: 6rem;
+
+  /* Köşeler: hiyerarşiye göre farklı — her şeye aynı köşe verilmez */
+  --kose-kucuk: 6px;   /* çip, rozet, input */
+  --kose-orta: 10px;   /* buton */
+  --kose-buyuk: 16px;  /* gerçek kartlar */
+
+  /* ---- Bootstrap'i kendi token'larımıza bağla ---- */
+  --bs-body-font-family: var(--yazi-govde);
+  --bs-body-color: var(--murekkep);
+  --bs-body-bg: var(--zemin);
+  --bs-secondary-color: var(--soluk);
+  --bs-border-color: var(--cizgi);
+  --bs-link-color: #1F6B5C;
+  --bs-link-color-rgb: 31, 107, 92;
+  --bs-link-hover-color: var(--murekkep);
+  --bs-link-hover-color-rgb: 19, 48, 47;
+  --bs-emphasis-color: var(--murekkep);
+  --bs-heading-color: var(--murekkep);
+  --bs-border-radius: var(--kose-kucuk);
+  --bs-border-radius-lg: var(--kose-buyuk);
+  --bs-focus-ring-color: rgba(233, 162, 59, .45);
+}
+
+
+/* ------------------------------------------------------------------
+   3) TEMEL
+   ------------------------------------------------------------------ */
+html { font-size: 16px; }
+/* Footer her zaman en altta: body dikey flex, main kalan alanı doldurur */
+body {
+  min-height: 100vh; display: flex; flex-direction: column;
+  font-feature-settings: "cv11", "ss03";   /* Inter: daha sade "a" ve "l" */
+  -webkit-font-smoothing: antialiased;
+}
+main#icerik { flex: 1 0 auto; }
+
+h1, h2, h3, h4, .h1, .h2, .h3, .h4, .display-6 {
+  font-family: var(--yazi-baslik); font-weight: 650; letter-spacing: -0.015em;
+  text-wrap: balance; line-height: 1.15;
+}
+h5, h6, .h5, .h6 { font-family: var(--yazi-baslik); font-weight: 600; }
+p, li { text-wrap: pretty; }
+.okuma { max-width: 65ch; }
+
+/* Saat, tarih, ücret, süre: defter hissi — eş genişlikli rakamlar alt alta hizalanır */
+.veri, .table td.veri, time { font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; font-size: .92em; letter-spacing: -0.01em; }
+
+/* Klavye odağı her zaman görünür (fareyle tıklamada çıkmaz: :focus-visible) */
+:focus-visible { outline: 3px solid var(--safran); outline-offset: 2px; border-radius: 4px; }
+.btn:focus-visible, .form-control:focus, .form-select:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 3px rgba(233, 162, 59, .45); border-color: var(--safran-koyu);
+}
+
+/* İçeriğe atla bağlantısı (klavye ve ekran okuyucu kullanıcıları için) */
+.icerige-atla { position: absolute; left: -9999px; top: var(--b2); z-index: 2000; background: var(--murekkep); color: #fff; padding: var(--b2) var(--b4); border-radius: var(--kose-kucuk); }
+.icerige-atla:focus { left: var(--b4); color: #fff; }
+
+
+/* ------------------------------------------------------------------
+   4) BOOTSTRAP BİLEŞENLERİ — renk ve biçim
+   ------------------------------------------------------------------ */
+.btn { --bs-btn-border-radius: var(--kose-orta); --bs-btn-font-weight: 600; --bs-btn-padding-x: 1.1rem; --bs-btn-padding-y: .55rem; }
+.btn-lg { --bs-btn-padding-x: 1.4rem; --bs-btn-padding-y: .75rem; --bs-btn-font-size: 1.05rem; }
+.btn-sm { --bs-btn-padding-x: .7rem; --bs-btn-padding-y: .3rem; }
+
+/* Birincil = safran zemin + koyu mürekkep yazı (beyaz yazı safran üstünde okunmaz) */
+.btn-primary {
+  --bs-btn-bg: var(--safran); --bs-btn-border-color: var(--safran); --bs-btn-color: var(--murekkep);
+  --bs-btn-hover-bg: var(--safran-koyu); --bs-btn-hover-border-color: var(--safran-koyu); --bs-btn-hover-color: var(--murekkep);
+  --bs-btn-active-bg: var(--safran-koyu); --bs-btn-active-border-color: var(--safran-koyu); --bs-btn-active-color: var(--murekkep);
+  --bs-btn-disabled-bg: var(--safran); --bs-btn-disabled-border-color: var(--safran); --bs-btn-disabled-color: var(--murekkep);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--murekkep); --bs-btn-border-color: var(--murekkep);
+  --bs-btn-hover-bg: var(--murekkep); --bs-btn-hover-border-color: var(--murekkep); --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: var(--murekkep); --bs-btn-active-border-color: var(--murekkep); --bs-btn-active-color: #fff;
+}
+.btn-koyu {
+  --bs-btn-bg: var(--murekkep); --bs-btn-border-color: var(--murekkep); --bs-btn-color: #fff;
+  --bs-btn-hover-bg: #0B2221; --bs-btn-hover-border-color: #0B2221; --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: #0B2221; --bs-btn-active-color: #fff;
+}
+.btn-link { --bs-btn-color: #1F6B5C; --bs-btn-hover-color: var(--murekkep); }
+
+.form-control, .form-select { border-color: var(--cizgi); padding: .6rem .8rem; background-color: var(--yuzey); }
+.form-label { font-weight: 600; font-size: .92rem; margin-bottom: var(--b1); }
+.form-text { color: var(--soluk); }
+.text-danger.field-validation-error, .field-validation-error { font-size: .88rem; }
+
+.table { --bs-table-bg: transparent; --bs-table-border-color: var(--cizgi); }
+.table > thead th { font-weight: 600; font-size: .85rem; color: var(--soluk); border-bottom-width: 1px; }
+.table-light { --bs-table-bg: var(--adacayi-acik); --bs-table-color: var(--murekkep); }
+
+.card { --bs-card-border-color: var(--cizgi); --bs-card-border-radius: var(--kose-buyuk); --bs-card-cap-bg: var(--yuzey); }
+.alert { border-radius: var(--kose-orta); border-width: 1px; }
+.alert-success { --bs-alert-bg: #E5F3EB; --bs-alert-border-color: #BFE0CC; --bs-alert-color: #145136; }
+.alert-danger  { --bs-alert-bg: #FBEAE8; --bs-alert-border-color: #F0C4BF; --bs-alert-color: #7D1A14; }
+.badge { font-weight: 600; border-radius: var(--kose-kucuk); }
+
+/* Eski sayfalarda kullanılan sınıflar (diğer sayfalar sonraki günlerde yenilenecek) */
+.kart-golge { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: var(--kose-buyuk); box-shadow: none; }
+.ozet-kart { border: 1px solid var(--cizgi); border-left: 4px solid var(--adacayi); border-radius: var(--kose-orta); }
+.ozet-sayi { font-family: var(--yazi-baslik); font-size: 1.9rem; font-weight: 700; color: var(--murekkep); }
 
 /* Evcil hayvan kartı */
-.hayvan-kart img, .hayvan-foto { object-fit: cover; height: 180px; width: 100%; border-radius: .6rem .6rem 0 0; }
+.hayvan-kart img, .hayvan-foto { object-fit: cover; height: 180px; width: 100%; border-radius: var(--kose-buyuk) var(--kose-buyuk) 0 0; }
 .hayvan-foto-yok { height: 180px; display: flex; align-items: center; justify-content: center;
-                   font-size: 4rem; background: #e3efec; border-radius: .6rem .6rem 0 0; }
-
-/* Randevu oluşturma: boş saat düğmeleri */
-.saat-dugmesi { min-width: 4.5rem; }
-.btn.saat-dugmesi.active { background: var(--vk-ana); color: #fff; border-color: var(--vk-ana); }
-
-.footer { padding: 1.1rem 0; background: #fff; margin-top: 2rem; }
-
-/* Detay sayfasında hayvan kartı kendi yüksekliğinde kalsın (listede eşit yükseklik için h-100 var) */
+                   font-size: 4rem; background: var(--adacayi-acik); border-radius: var(--kose-buyuk) var(--kose-buyuk) 0 0; }
 .detay-kart .hayvan-kart { height: auto !important; }
 
-.btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus, .form-select:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(31,122,109,.45);
-}
+/* Randevu formu: boş saat düğmeleri — seçili saat safran */
+.saat-dugmesi { min-width: 4.5rem; font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; }
+.btn.saat-dugmesi.active { background: var(--safran); color: var(--murekkep); border-color: var(--safran); }
 
 /* Hata yokken doğrulama özeti kutusu görünmesin (Tag Helper boş div üretir). */
 .validation-summary-valid { display: none; }
+
+
+/* ------------------------------------------------------------------
+   5) ÜST BAR (_Layout)
+   Beyaz, ince alt çizgili, yapışkan. Gradyan yok: sakin bir klinik tabelası.
+   ------------------------------------------------------------------ */
+.ust-bar {
+  position: sticky; top: 0; z-index: 1030;
+  background: var(--yuzey);
+  border-bottom: 1px solid var(--cizgi);
+  /* DİKKAT: Buraya backdrop-filter (buzlu cam) EKLEMEYİN. backdrop-filter, içindeki position:fixed
+     öğeler için yeni bir "kapsayıcı" oluşturur; mobil menü (offcanvas) ekrana değil üst bara göre
+     konumlanır ve sayfa yana taşar. */
+}
+.ust-bar .navbar { padding-block: var(--b3); }
+.marka { display: inline-flex; align-items: baseline; gap: var(--b2); text-decoration: none; color: var(--murekkep); }
+.marka:hover { color: var(--murekkep); }
+.marka-ad { font-family: var(--yazi-baslik); font-weight: 750; font-size: 1.6rem; letter-spacing: -0.04em; line-height: 1; }
+.marka-ad .nokta { color: var(--safran); }          /* "Pati." — yazı markasının tek rengi */
+.marka-alt { font-size: .82rem; color: var(--soluk); font-weight: 500; }
+
+.ust-bar .nav-link { color: var(--murekkep); font-weight: 500; padding-inline: var(--b3) !important; position: relative; }
+.ust-bar .nav-link:hover { color: #1F6B5C; }
+/* Aktif sayfa: altında safran çizgi (masaüstü), solunda çizgi (mobil menü) */
+.ust-bar .nav-link.aktif { font-weight: 650; }
+@media (min-width: 992px) {
+  .ust-bar .nav-link.aktif::after {
+    content: ""; position: absolute; left: var(--b3); right: var(--b3); bottom: -13px; height: 3px;
+    background: var(--safran); border-radius: 3px 3px 0 0;
+  }
+}
+@media (max-width: 991.98px) {
+  .ust-bar .nav-link.aktif { box-shadow: inset 3px 0 0 var(--safran); }
+  .offcanvas .nav-link { padding-block: var(--b3); font-size: 1.05rem; }
+}
+.ust-bar .navbar-toggler { border-color: var(--cizgi); }
+.kullanici-adi { font-size: .9rem; color: var(--soluk) !important; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+/* ------------------------------------------------------------------
+   6) ALT BİLGİ (footer)
+   ------------------------------------------------------------------ */
+.alt-bilgi { background: var(--murekkep); color: #CFDBD6; margin-top: var(--b16); padding-block: var(--b12) var(--b8); font-size: .92rem; }
+.alt-bilgi a { color: #fff; }
+.alt-bilgi h2 { font-size: 1rem; color: #fff; margin-bottom: var(--b3); }
+.alt-bilgi .marka-ad { color: #fff; }
+.alt-bilgi dl { display: grid; grid-template-columns: auto 1fr; gap: var(--b1) var(--b4); margin: 0; }
+.alt-bilgi dt { font-weight: 500; color: #CFDBD6; }
+.alt-bilgi dd { margin: 0; color: #fff; }
+.alt-bilgi .alt-cizgi { border-top: 1px solid rgba(255,255,255,.14); margin-top: var(--b8); padding-top: var(--b4); color: #9FB2AB; font-size: .85rem; }
+
+
+/* ------------------------------------------------------------------
+   7) ANA SAYFA
+   ------------------------------------------------------------------ */
+.bolum { padding-block: var(--b16); }
+.bolum + .bolum { border-top: 1px solid var(--cizgi); }
+.bolum-baslik { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: var(--b3); }
+.bolum-giris { color: var(--soluk); font-size: 1.05rem; max-width: 60ch; margin-bottom: var(--b8); }
+
+/* ---- Hero: içerik kadar yüksek, 100vh değil ---- */
+.hero { padding-block: var(--b12) var(--b16); }
+.hero-baslik { font-size: clamp(2.3rem, 5.2vw, 4rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; max-width: 14ch; }
+.hero-metin { font-size: 1.15rem; color: var(--soluk); max-width: 46ch; margin-block: var(--b6) var(--b8); }
+.hero-adres { margin-top: var(--b6); color: var(--soluk); font-size: .95rem; }
+.hero-adres strong { color: var(--murekkep); font-weight: 600; }
+
+/* ---- Hero sağı: canlı boş saatler "randevu fişi" — sayfanın tek gerçek vurgu nesnesi ---- */
+.randevu-fisi {
+  background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: var(--kose-buyuk);
+  box-shadow: 0 1px 0 var(--cizgi), 0 24px 48px -28px rgba(19, 48, 47, .35);
+  overflow: hidden;
+}
+.randevu-fisi-ust { display: flex; justify-content: space-between; align-items: baseline; gap: var(--b4); padding: var(--b4) var(--b6); background: var(--murekkep); color: #fff; }
+.randevu-fisi-ust h2 { font-size: 1.05rem; margin: 0; color: #fff; }
+.randevu-fisi-ust .veri { color: #CFDBD6; font-size: .85rem; }
+.canli-isaret { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5BD69A; margin-right: var(--b2); vertical-align: middle; }
+.randevu-fisi-govde { padding: var(--b2) var(--b6) var(--b4); }
+.fis-satir { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--b2); padding-block: var(--b4); border-bottom: 1px dashed var(--cizgi); }
+.fis-satir:last-child { border-bottom: 0; }
+.fis-hekim { display: flex; justify-content: space-between; align-items: baseline; gap: var(--b2); flex-wrap: wrap; }
+.fis-hekim strong { font-weight: 650; }
+.fis-hekim span { color: var(--soluk); font-size: .85rem; }
+.saat-cipleri { display: flex; flex-wrap: wrap; gap: var(--b2); }
+.saat-cipi {
+  font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; font-size: .88rem; font-weight: 500;
+  padding: .3rem .55rem; border-radius: var(--kose-kucuk); border: 1px solid var(--cizgi);
+  color: var(--murekkep); background: var(--zemin); text-decoration: none;
+}
+a.saat-cipi:hover { border-color: var(--safran); background: #FDF3E3; color: var(--murekkep); }
+.saat-cipi-fazla { color: var(--soluk); font-size: .85rem; align-self: center; }
+.randevu-fisi-alt { padding: var(--b3) var(--b6); background: var(--zemin); border-top: 1px solid var(--cizgi); font-size: .88rem; color: var(--soluk); }
+.fis-bos { padding-block: var(--b6); color: var(--soluk); }
+/* Yüklenirken iskelet satırlar */
+.iskelet { height: 1rem; border-radius: 4px; background: linear-gradient(90deg, var(--adacayi-acik), #F1F5F2, var(--adacayi-acik)); background-size: 200% 100%; animation: iskelet 1.2s linear infinite; }
+@keyframes iskelet { to { background-position: -200% 0; } }
+
+/* ---- Hizmetler: fiyat listesi gibi (kartsız, satırlar) ---- */
+.hizmet-listesi { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--b12); }
+.hizmet-listesi li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--b1) var(--b4); padding-block: var(--b4); border-bottom: 1px solid var(--cizgi); }
+.hizmet-ad { font-weight: 600; }
+.hizmet-aciklama { grid-column: 1; color: var(--soluk); font-size: .9rem; }
+.hizmet-olcu { grid-column: 2; grid-row: 1 / span 2; text-align: right; white-space: nowrap; }
+.hizmet-olcu .ucret { display: block; font-weight: 600; font-size: 1rem; }
+.hizmet-olcu .sure { color: var(--soluk); font-size: .85rem; }
+@media (max-width: 767.98px) { .hizmet-listesi { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Hekimler: yan yana sade sütunlar ---- */
+.hekim-listesi { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--b8); }
+.hekim { border-top: 3px solid var(--murekkep); padding-top: var(--b4); }
+.hekim-bas { width: 3rem; height: 3rem; border-radius: 50%; background: var(--adacayi-acik); color: var(--murekkep);
+             display: grid; place-items: center; font-family: var(--yazi-baslik); font-weight: 700; margin-bottom: var(--b3); }
+.hekim h3 { font-size: 1.2rem; margin-bottom: var(--b1); }
+.hekim .unvan { color: var(--soluk); font-size: .9rem; margin-bottom: var(--b3); }
+.etiketler { display: flex; flex-wrap: wrap; gap: var(--b2); list-style: none; padding: 0; margin: 0; }
+.etiketler li { font-size: .82rem; padding: .2rem .55rem; border-radius: 999px; background: var(--adacayi-acik); color: #24483F; }
+
+/* ---- Randevu nasıl işler: gerçek bir sıra → numaralı adımlar + dolan çizgi ---- */
+.adimlar { list-style: none; padding: 0; margin: 0; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--b6); }
+.adimlar::before, .adim-cizgi { /* adımları bağlayan çizgi: gri zemin + üstünde dolan safran */
+  content: ""; position: absolute; top: 1.25rem; height: 2px; background: var(--cizgi);
+  /* İlk dairenin ortasından son dairenin ortasına: son sütunun genişliği kadar sağdan boşluk bırakılır */
+  left: 1.25rem; right: calc((100% - 3 * var(--b6)) / 4 + var(--b6) - 1.25rem);
+}
+.adim-cizgi { background: var(--safran); transform-origin: left center; transform: scaleX(1); }
+.adim { position: relative; }
+.adim-no {
+  position: relative; z-index: 1; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  display: grid; place-items: center; background: var(--murekkep); color: #fff;
+  font-family: var(--yazi-veri); font-weight: 600; margin-bottom: var(--b4);
+  box-shadow: 0 0 0 6px var(--zemin);
+}
+.adim h3 { font-size: 1.1rem; margin-bottom: var(--b2); }
+.adim p { color: var(--soluk); font-size: .95rem; margin: 0; }
+.adim .durum-ornek { display: inline-block; margin-top: var(--b2); font-size: .8rem; font-weight: 600; padding: .15rem .5rem; border-radius: var(--kose-kucuk); background: #FFF1D6; color: var(--durum-bekliyor); }
+@media (max-width: 767.98px) {
+  .adimlar { grid-template-columns: minmax(0, 1fr); gap: var(--b6); padding-left: 3.5rem; }
+  .adimlar::before, .adim-cizgi { top: 1.25rem; bottom: 1.25rem; left: 1.2rem; right: auto; width: 2px; height: auto; }
+  .adim-cizgi { transform-origin: center top; }
+  .adim-no { position: absolute; left: -3.5rem; top: 0; margin: 0; }
+}
+
+/* ---- Yapay zekâ asistanı: örnek konuşma ---- */
+.asistan { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--b12); align-items: center; }
+.konusma { background: var(--murekkep); color: #E8F0EC; border-radius: var(--kose-buyuk); padding: var(--b6); display: flex; flex-direction: column; gap: var(--b3); }
+.konusma-not { font-size: .8rem; color: #9FB2AB; }
+.balon { max-width: 85%; padding: var(--b3) var(--b4); border-radius: 14px; line-height: 1.45; }
+.balon-kullanici { align-self: flex-end; background: var(--safran); color: var(--murekkep); border-bottom-right-radius: 4px; font-weight: 500; }
+.balon-asistan { align-self: flex-start; background: #1E4442; border-bottom-left-radius: 4px; }
+.arac-cagri { align-self: flex-start; font-family: var(--yazi-veri); font-size: .8rem; color: #9FB2AB; padding-left: var(--b1); }
+.arac-cagri b { color: #CFE3DA; font-weight: 500; }
+@media (max-width: 991.98px) { .asistan { grid-template-columns: minmax(0, 1fr); gap: var(--b8); } }
+
+/* ---- Klinik bilgisi: çalışma saatleri tablosu, bugün vurgulu ---- */
+.saat-tablosu { width: 100%; max-width: 26rem; border-collapse: collapse; }
+.saat-tablosu th, .saat-tablosu td { padding: var(--b2) 0; border-bottom: 1px solid var(--cizgi); }
+.saat-tablosu th { font-weight: 500; }
+.saat-tablosu td { text-align: right; }
+.saat-tablosu tr.bugun th, .saat-tablosu tr.bugun td { font-weight: 700; }
+.saat-tablosu tr.bugun th::after { content: "bugün"; margin-left: var(--b2); font-size: .72rem; font-weight: 600; padding: .1rem .4rem; border-radius: 4px; background: var(--safran); color: var(--murekkep); vertical-align: middle; }
+.kapali { color: var(--soluk); }
+
+
+/* ------------------------------------------------------------------
+   8) KAYDIRMA ANİMASYONLARI (wwwroot/js/site.js ile birlikte)
+   - Sınıfları JS ekler: JS çalışmazsa hiçbir şey gizlenmez.
+   - Başlangıç durumu tamamen görünmez DEĞİL (opacity .35): içerik her an okunur.
+   - prefers-reduced-motion: hareket istemeyen kullanıcıda hepsi kapalı.
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  .js .belir { opacity: .35; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+  .js .belir.gorundu { opacity: 1; transform: none; }
+
+  /* Tek orkestre an: adımlar sırayla gelir, çizgi soldan sağa dolar */
+  .js .adimlar .adim-cizgi { transform: scaleX(0); transition: transform 1.4s cubic-bezier(.4, 0, .2, 1) .15s; }
+  .js .adimlar.gorundu .adim-cizgi { transform: scaleX(1); }
+  .js .adimlar .adim { opacity: .35; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+  .js .adimlar.gorundu .adim { opacity: 1; transform: none; }
+  .js .adimlar.gorundu .adim:nth-child(2) { transition-delay: .1s; }   /* 1. çocuk = çizgi */
+  .js .adimlar.gorundu .adim:nth-child(3) { transition-delay: .45s; }
+  .js .adimlar.gorundu .adim:nth-child(4) { transition-delay: .8s; }
+  .js .adimlar.gorundu .adim:nth-child(5) { transition-delay: 1.15s; }
+  @media (max-width: 767.98px) {
+    .js .adimlar .adim-cizgi { transform: scaleY(0); }
+    .js .adimlar.gorundu .adim-cizgi { transform: scaleY(1); }
+  }
+
+  /* Hero: sayfa açılışında fiş hafifçe yerine oturur */
+  .js .randevu-fisi { animation: fis-gelis .8s cubic-bezier(.2, .7, .2, 1) both .1s; }
+  @keyframes fis-gelis { from { transform: translateY(16px) rotate(.6deg); opacity: .4; } to { transform: none; opacity: 1; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iskelet { animation: none; }
+}
+
+/* Bootstrap, navbar içindeki offcanvas gövdesine geniş ekranda flex-grow: 0 veriyor;
+   menünün sağ ve sol grupları ayrılsın diye kalan alanı doldurmasını istiyoruz. */
+@media (min-width: 992px) { .ust-bar .offcanvas-body { flex-grow: 1; } }
