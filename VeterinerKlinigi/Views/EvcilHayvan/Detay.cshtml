@@ -43,19 +43,19 @@
     <div class="col-lg-8">
         @* ---- REST API'den gelen aşı takvimi ---- *@
         <div class="card kart-golge mb-3">
-            <div class="card-header bg-white"><strong>💉 Yaklaşan aşılar</strong> <small class="text-muted">— kaynak: GET /api/evcil-hayvanlar/@Model.Id/asilar</small></div>
+            <div class="card-header"><strong>💉 Yaklaşan aşılar</strong> <small class="text-muted">— kaynak: GET /api/evcil-hayvanlar/@Model.Id/asilar</small></div>
             <ul id="yaklasanAsilar" class="list-group list-group-flush"><li class="list-group-item text-muted">Yükleniyor...</li></ul>
         </div>
 
         @* ---- Aşı kayıtları (CRUD) ---- *@
         <div class="card kart-golge mb-3">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Aşı geçmişi</strong>
                 <a asp-controller="AsiKaydi" asp-action="Ekle" asp-route-hayvanId="@Model.Id" class="btn btn-sm btn-primary">+ Aşı ekle</a>
             </div>
             <div class="table-responsive">
                 <table class="table mb-0 align-middle">
-                    <thead class="table-light"><tr><th>Aşı</th><th>Yapıldığı</th><th>Sonraki doz</th><th>Not</th><th></th></tr></thead>
+                    <thead><tr><th>Aşı</th><th>Yapıldığı</th><th>Sonraki doz</th><th>Not</th><th></th></tr></thead>
                     <tbody>
                         @foreach (var a in Model.AsiKayitlari)
                         {
@@ -84,7 +84,7 @@
 
         @* ---- Randevu geçmişi ---- *@
         <div class="card kart-golge">
-            <div class="card-header bg-white"><strong>Randevu geçmişi</strong></div>
+            <div class="card-header"><strong>Randevu geçmişi</strong></div>
             <ul class="list-group list-group-flush">
                 @foreach (var r in Model.Randevular)
                 {
@@ -115,10 +115,10 @@
                     return;
                 }
                 $.each(takvim.yaklasan, function (_, a) {
-                    var renk = a.kalanGun <= 30 ? 'bg-warning text-dark' : 'bg-success';
+                    var renk = a.kalanGun <= 30 ? 'durum-bekliyor' : 'durum-onaylandi';
                     var tarih = new Date(a.sonrakiDozTarihi).toLocaleDateString('tr-TR');
                     liste.append('<li class="list-group-item d-flex justify-content-between"><span>' + guvenli(a.asiAdi) +
-                        ' — ' + tarih + '</span><span class="badge ' + renk + '">' + a.kalanGun + ' gün kaldı</span></li>');
+                        ' — ' + tarih + '</span><span class="durum ' + renk + '">' + a.kalanGun + ' gün kaldı</span></li>');
                 });
             })
             .fail(function (xhr) {

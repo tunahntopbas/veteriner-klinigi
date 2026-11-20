@@ -90,7 +90,7 @@
                             return '<button type="button" class="btn btn-outline-secondary btn-sm saat-dugmesi m-1' + aktif +
                                 '" data-hekim="' + h.veterinerId + '" data-hekim-ad="' + guvenli(h.adSoyad) + '" data-saat="' + s + '">' + s + '</button>';
                         }).join('');
-                        kutu.append('<div class="border rounded p-2 mb-2 bg-white"><strong>🩺 ' + guvenli(h.unvan) + ' ' + guvenli(h.adSoyad) +
+                        kutu.append('<div class="border rounded p-2 mb-2"><strong>🩺 ' + guvenli(h.unvan) + ' ' + guvenli(h.adSoyad) +
                             '</strong> <small class="text-muted">' + $.map(h.uzmanliklar, guvenli).join(', ') + '</small><div>' + dugmeler + '</div></div>');
                     });
                 })
