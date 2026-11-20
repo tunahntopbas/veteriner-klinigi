@@ -1,106 +1,213 @@
 ﻿@*
-    LAYOUT — her sayfada değişmeyen kısım: menü, mesaj kutusu, footer.
+    LAYOUT — her sayfada değişmeyen kısım: üst bar, mesaj kutusu, alt bilgi.
     _ViewStart.cshtml tarafından otomatik atanır (Areas içindekiler dahil).
 
     Menü kullanıcının ROLÜNE göre değişir (User.IsInRole).
     DİKKAT: Menüyü gizlemek GÜVENLİK DEĞİLDİR. Asıl koruma controller'lardaki
     [Authorize(Roles = ...)] ve servislerdeki sahiplik kontrolleridir.
     Menü sadece kullanıcıya göremeyeceği linkleri göstermemek içindir.
+
+    Mobilde menü Bootstrap "offcanvas" ile sağdan açılan bir panel olur
+    (navbar-expand-lg: 992px ve üstünde yatay menü, altında panel).
 *@
+@inject IKlinikServisi KlinikServisi
+@{
+    // Aktif sayfayı bulmak için şu anki area ve controller adı.
+    var rota = ViewContext.RouteData.Values;
+    var aktifArea = rota["area"]?.ToString() ?? "";
+    var aktifController = rota["controller"]?.ToString() ?? "";
+    var aktifAction = rota["action"]?.ToString() ?? "";
+
+    // Menü bağlantısı bu sayfaya mı ait? → "aktif" sınıfı ve aria-current.
+    bool AktifMi(string area, string controller, string? action = null) =>
+        string.Equals(aktifArea, area, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(aktifController, controller, StringComparison.OrdinalIgnoreCase)
+        && (action is null || string.Equals(aktifAction, action, StringComparison.OrdinalIgnoreCase));
+    string Sinif(bool aktif) => aktif ? "nav-link aktif" : "nav-link";
+    string? Mevcut(bool aktif) => aktif ? "page" : null;
+
+    // Alt bilgideki çalışma saatleri veritabanından (KlinikServisi) gelir.
+    // Aynı saatlere sahip ardışık günler tek satırda birleştirilir: "Pazartesi – Cuma 09:00–18:00".
+    var klinik = await KlinikServisi.GetirAsync();
+    var saatGruplari = new List<(string Gunler, string Saat)>();
+    var gunler = GunAdlari.HaftaSirasi;
+    for (var i = 0; i < gunler.Length;)
+    {
+        var c = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gunler[i]);
+        var metin = c is null || c.Kapali ? "Kapalı" : $"{c.AcilisSaati:HH\\:mm}–{c.KapanisSaati:HH\\:mm}";
+        var j = i;
+        while (j + 1 < gunler.Length)
+        {
+            var d = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gunler[j + 1]);
+            var dMetin = d is null || d.Kapali ? "Kapalı" : $"{d.AcilisSaati:HH\\:mm}–{d.KapanisSaati:HH\\:mm}";
+            if (dMetin != metin) break;
+            j++;
+        }
+        var ad = i == j ? GunAdlari.Ad(gunler[i]) : $"{GunAdlari.Ad(gunler[i])} – {GunAdlari.Ad(gunler[j])}";
+        saatGruplari.Add((ad, metin));
+        i = j + 1;
+    }
+}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] — Pati Veteriner Kliniği</title>
-    <script type="importmap"></script>
+    @* JS çalışıyorsa <html>'e "js" sınıfı eklenir; animasyon başlangıç stilleri SADECE bu sınıf varken uygulanır.
+       Böylece JS kapalıysa hiçbir içerik soluk/gizli kalmaz. *@
+    <script>document.documentElement.classList.add('js');</script>
+    <link rel="preload" href="~/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/VeterinerKlinigi.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark ust-menu mb-4">
+    <a class="icerige-atla" href="#icerik">İçeriğe geç</a>
+
+    <header class="ust-bar">
+        <nav class="navbar navbar-expand-lg" aria-label="Ana menü">
             <div class="container">
-                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">🐾 Pati Klinik</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#anaMenu"
-                        aria-controls="anaMenu" aria-expanded="false" aria-label="Menüyü aç">
+                @* Yazı markası: "Pati." — noktası safran. Görsel/emoji logo yok. *@
+                <a class="marka" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Pati Veteriner Kliniği, ana sayfa">
+                    <span class="marka-ad">Pati<span class="nokta">.</span></span>
+                    <span class="marka-alt d-none d-sm-inline">Veteriner Kliniği</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#anaMenu"
+                        aria-controls="anaMenu" aria-label="Menüyü aç">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="anaMenu">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Hizmetler">Hizmetler</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Hekimler">Hekimlerimiz</a></li>
 
-                        @if (User.IsInRole(Roller.Uye))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="EvcilHayvan" asp-action="Index">Hayvanlarım</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Randevu" asp-action="Index">Randevularım</a></li>
-                        }
-                        @if (User.IsInRole(Roller.Veteriner))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Hekim Paneli</a></li>
-                        }
-                        @if (User.IsInRole(Roller.Admin))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-area="Admin" asp-controller="Panel" asp-action="Index">Admin Paneli</a></li>
-                        }
-                    </ul>
+                <div class="offcanvas offcanvas-end" tabindex="-1" id="anaMenu" aria-labelledby="anaMenuBaslik">
+                    <div class="offcanvas-header">
+                        <h2 class="offcanvas-title h5" id="anaMenuBaslik">Menü</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Menüyü kapat"></button>
+                    </div>
+                    <div class="offcanvas-body align-items-lg-center">
+                        <ul class="navbar-nav me-auto ms-lg-4">
+                            @{ var hizmetlerAktif = AktifMi("", "Home", "Hizmetler"); var hekimlerAktif = AktifMi("", "Home", "Hekimler"); }
+                            <li class="nav-item"><a class="@Sinif(hizmetlerAktif)" aria-current="@Mevcut(hizmetlerAktif)" asp-area="" asp-controller="Home" asp-action="Hizmetler">Hizmetler</a></li>
+                            <li class="nav-item"><a class="@Sinif(hekimlerAktif)" aria-current="@Mevcut(hekimlerAktif)" asp-area="" asp-controller="Home" asp-action="Hekimler">Hekimlerimiz</a></li>
 
-                    <ul class="navbar-nav">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Profil" asp-action="Index" title="Profil ve MCP erişim anahtarları">
-                                    👤 @User.Identity.Name
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                @* Çıkış POST ile yapılır; form antiforgery token'ı otomatik ekler. *@
-                                <form asp-area="" asp-controller="Hesap" asp-action="Cikis" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link nav-link">Çıkış</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Hesap" asp-action="Giris">Giriş</a></li>
-                            <li class="nav-item"><a class="btn btn-light btn-sm ms-lg-2 mt-1" asp-area="" asp-controller="Hesap" asp-action="Kayit">Üye Ol</a></li>
-                        }
-                    </ul>
+                            @if (User.IsInRole(Roller.Uye))
+                            {
+                                var hayvanAktif = AktifMi("", "EvcilHayvan") || AktifMi("", "AsiKaydi");
+                                var randevuAktif = AktifMi("", "Randevu");
+                                <li class="nav-item"><a class="@Sinif(hayvanAktif)" aria-current="@Mevcut(hayvanAktif)" asp-area="" asp-controller="EvcilHayvan" asp-action="Index">Hayvanlarım</a></li>
+                                <li class="nav-item"><a class="@Sinif(randevuAktif)" aria-current="@Mevcut(randevuAktif)" asp-area="" asp-controller="Randevu" asp-action="Index">Randevularım</a></li>
+                            }
+                            @if (User.IsInRole(Roller.Veteriner))
+                            {
+                                var hekimAktif = aktifArea == "Hekim";
+                                <li class="nav-item"><a class="@Sinif(hekimAktif)" aria-current="@Mevcut(hekimAktif)" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Hekim paneli</a></li>
+                            }
+                            @if (User.IsInRole(Roller.Admin))
+                            {
+                                var adminAktif = aktifArea == "Admin";
+                                <li class="nav-item"><a class="@Sinif(adminAktif)" aria-current="@Mevcut(adminAktif)" asp-area="Admin" asp-controller="Panel" asp-action="Index">Yönetim</a></li>
+                            }
+                        </ul>
+
+                        <ul class="navbar-nav align-items-lg-center gap-lg-1 mt-3 mt-lg-0">
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                var profilAktif = AktifMi("", "Profil");
+                                <li class="nav-item">
+                                    <a class="@Sinif(profilAktif) kullanici-adi" aria-current="@Mevcut(profilAktif)" asp-area="" asp-controller="Profil" asp-action="Index" title="Profil ve yapay zekâ erişim anahtarları">
+                                        @User.Identity.Name
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    @* Çıkış POST ile yapılır; form antiforgery token'ı otomatik ekler. *@
+                                    <form asp-area="" asp-controller="Hesap" asp-action="Cikis" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-link nav-link">Çıkış</button>
+                                    </form>
+                                </li>
+                                @if (User.IsInRole(Roller.Uye))
+                                {
+                                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                                        <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Randevu" asp-action="Olustur">Randevu al</a>
+                                    </li>
+                                }
+                            }
+                            else
+                            {
+                                var girisAktif = AktifMi("", "Hesap", "Giris");
+                                <li class="nav-item"><a class="@Sinif(girisAktif)" aria-current="@Mevcut(girisAktif)" asp-area="" asp-controller="Hesap" asp-action="Giris">Giriş yap</a></li>
+                                <li class="nav-item ms-lg-2 mt-2 mt-lg-0"><a class="btn btn-koyu btn-sm" asp-area="" asp-controller="Hesap" asp-action="Kayit">Üye ol</a></li>
+                            }
+                        </ul>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-5">
-            @* PRG sonrası tek seferlik mesajlar (TempData bir sonraki isteğe kadar yaşar). *@
-            @if (TempData["Mesaj"] is string mesaj)
-            {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    @mesaj
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
-                </div>
-            }
-            @if (TempData["Hata"] is string hata)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @hata
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
-                </div>
-            }
+    <main id="icerik" role="main" tabindex="-1">
+        @* PRG sonrası tek seferlik mesajlar (TempData bir sonraki isteğe kadar yaşar). *@
+        @if (TempData.Peek("Mesaj") is string || TempData.Peek("Hata") is string)
+        {
+            <div class="container pt-4">
+                @if (TempData["Mesaj"] is string m)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @m
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+                    </div>
+                }
+                @if (TempData["Hata"] is string hata)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @hata
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+                    </div>
+                }
+            </div>
+        }
 
+        @* Ana sayfa kendi tam genişlik bölümlerini çizer; diğer sayfalar ortalanmış container içinde. *@
+        @if (ViewData["TamGenislik"] is true)
+        {
             @RenderBody()
-        </main>
-    </div>
+        }
+        else
+        {
+            <div class="container pt-4 pb-5">
+                @RenderBody()
+            </div>
+        }
+    </main>
 
-    <footer class="border-top footer text-muted">
-        <div class="container d-flex justify-content-between flex-wrap">
-            <span>&copy; 2026 — Pati Veteriner Kliniği</span>
-            <span>
-                <a href="/scalar" target="_blank">REST API dokümantasyonu</a>
-            </span>
+    <footer class="alt-bilgi">
+        <div class="container">
+            <div class="row g-4 g-lg-5">
+                <div class="col-lg-4">
+                    <span class="marka-ad">Pati<span class="nokta" style="color:var(--safran)">.</span></span>
+                    <p class="mt-3 mb-0 okuma">@klinik.Ad. Muayene, aşı ve bakım randevularınızı çevrimiçi alın, hayvanınızın aşı takvimini buradan izleyin.</p>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h2>Çalışma saatleri</h2>
+                    <dl>
+                        @foreach (var g in saatGruplari)
+                        {
+                            <dt>@g.Gunler</dt>
+                            <dd class="veri">@g.Saat</dd>
+                        }
+                    </dl>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h2>İletişim</h2>
+                    <p class="mb-1">@klinik.Adres</p>
+                    <p class="veri mb-3">@klinik.Telefon</p>
+                    <p class="mb-0"><a href="/scalar" target="_blank" rel="noopener">Geliştiriciler için REST API belgesi</a></p>
+                </div>
+            </div>
+            <div class="alt-cizgi d-flex justify-content-between flex-wrap gap-2">
+                <span>&copy; 2026 @klinik.Ad</span>
+                <span>Web Programlama dersi projesi</span>
+            </div>
         </div>
     </footer>
 
