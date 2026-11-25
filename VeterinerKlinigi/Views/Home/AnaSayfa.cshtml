@@ -7,7 +7,13 @@
     - 25.11 SADELEŞTİRME: sayfa göz yoruyordu. "Randevu nasıl işler" adımları, örnek asistan konuşması,
       çalışma saatleri ve adres bölümleri kaldırıldı (saatler ve adres zaten alt bilgide). Kalan üç bölüm:
       hero + canlı boş saatler, hizmetler, hekimler; en altta tek satırlık asistan şeridi.
-      Açıklama paragrafları kısaldı, hizmetler tek satıra indi, kaydırma animasyonu bu sayfadan çıkarıldı.
+      Açıklama paragrafları kısaldı, hizmetler tek satıra indi.
+    - ANİMASYON (25.11, "sade ama canlı"): her şey aynı anda hareket etmez, sırayla ve bir kez olur.
+      1) Açılış: başlık satırları maskenin altından yükselir, metin ve butonlar arkasından gelir, fiş yerine oturur.
+      2) Boş saat çipleri API cevabı gelince soldan sağa tek tek belirir; "canlı" noktası yavaşça nabız atar.
+      3) Kaydırınca: her bölümün başlığı, sonra satırları kısa aralıklarla gelir ("sirali" sınıfı, site.js).
+      4) Fare: fişin camında imleci izleyen hafif bir ışık ("isikli" sınıfı, site.js); hizmet satırında safran çizgi.
+      Hepsi yalnızca CSS transform/opacity (akıcı); "hareketi azalt" açıksa hiçbiri çalışmaz.
 *@
 @model AnaSayfaVM
 @{
@@ -47,9 +53,13 @@
     <div class="container">
         <div class="row g-4 g-lg-5 align-items-center">
             <div class="col-lg-6">
-                <h1 id="heroBaslik" class="hero-baslik">Boş saati görün, randevunuzu hemen alın.</h1>
-                <p class="hero-metin">Hekimlerimizin bugünkü müsait saatleri yanda. Bir saat seçin, gerisini randevu formu halleder.</p>
-                <div class="d-flex flex-wrap gap-2">
+                @* Her satır kendi maskesinde (overflow: hidden) aşağıdan yükselir *@
+                <h1 id="heroBaslik" class="hero-baslik acilis">
+                    <span class="satir"><span>Boş saati görün,</span></span>
+                    <span class="satir"><span>randevunuzu hemen alın.</span></span>
+                </h1>
+                <p class="hero-metin acilis-sonra">Hekimlerimizin bugünkü müsait saatleri yanda. Bir saat seçin, gerisini randevu formu halleder.</p>
+                <div class="d-flex flex-wrap gap-2 acilis-sonra">
                     @if (hekimMi)
                     {
                         <a class="btn btn-primary btn-lg" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Randevularıma git</a>
@@ -68,7 +78,7 @@
 
             <div class="col-lg-5 offset-lg-1">
                 @* Canlı boş saatler "randevu fişi". Veriyi aşağıdaki betik REST API'den getirir. *@
-                <article class="randevu-fisi" aria-labelledby="fisBaslik"
+                <article class="randevu-fisi isikli" aria-labelledby="fisBaslik"
                          id="bosSaatFisi"
                          data-hizmet-id="@muayene?.Id"
                          data-tarih="@hedefGun?.ToString("yyyy-MM-dd")">
@@ -111,12 +121,12 @@
 @* ============================ HİZMETLER ============================
    Fiyat listesi gibi: her hizmet TEK satır (ad, süre, ücret). Açıklamalar kaldırıldı; detay Hizmetler sayfasında. *@
 <section class="bolum" id="hizmetler" aria-labelledby="hizmetlerBaslik">
-    <div class="container">
+    <div class="container belir">
         <div class="bolum-ust">
             <h2 id="hizmetlerBaslik" class="bolum-baslik">Hizmetler ve ücretler</h2>
             <a class="bolum-baglanti" asp-controller="Home" asp-action="Hizmetler">Açıklamalarıyla görün</a>
         </div>
-        <ul class="hizmet-listesi">
+        <ul class="hizmet-listesi sirali">
             @foreach (var h in Model.Hizmetler)
             {
                 <li>
@@ -131,9 +141,9 @@
 
 @* ============================ HEKİMLER ============================ *@
 <section class="bolum" aria-labelledby="hekimlerBaslik">
-    <div class="container">
+    <div class="container belir">
         <h2 id="hekimlerBaslik" class="bolum-baslik">Hekimlerimiz</h2>
-        <div class="hekim-listesi">
+        <div class="hekim-listesi sirali">
             @foreach (var v in Model.Hekimler)
             {
                 <article class="hekim">
@@ -152,7 +162,7 @@
    Tek satırlık şerit: ne olduğu + nereden bağlanacağı. Ayrıntı README §7 ve Profil sayfasında. *@
 <section class="bolum" aria-labelledby="asistanBaslik">
     <div class="container">
-        <div class="asistan-serit">
+        <div class="asistan-serit belir isikli">
             <div>
                 <h2 id="asistanBaslik">Aşı takvimini yapay zekâ asistanınıza sorun</h2>
                 <p>Claude Desktop gibi bir asistan, MCP ile yalnızca sizin hayvanlarınızı ve randevularınızı görür.</p>
@@ -187,11 +197,12 @@
                         govde.append('<p class="fis-bos mb-0">Bu gün için boş saat kalmadı. Randevu formundan başka bir gün seçebilirsiniz.</p>');
                         return;
                     }
+                    var sira = 0;                         // çiplerin belirme sırası (CSS --i)
                     $.each(dolu, function (_, h) {
                         var ilkSaatler = h.bosSaatler.slice(0, 5);
                         var kalan = h.bosSaatler.length - ilkSaatler.length;
                         var cipler = $.map(ilkSaatler, function (s) {
-                            return '<a class="saat-cipi" href="' + randevuAdresi + '" aria-label="' + guvenli(h.adSoyad) + ', ' + s + '">' + s + '</a>';
+                            return '<a class="saat-cipi yeni" style="--i:' + (sira++) + '" href="' + randevuAdresi + '" aria-label="' + guvenli(h.adSoyad) + ', ' + s + '">' + s + '</a>';
                         }).join('');
                         if (kalan > 0) cipler += '<span class="saat-cipi-fazla">+' + kalan + ' saat daha</span>';
                         govde.append(

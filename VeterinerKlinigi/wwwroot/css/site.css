@@ -397,19 +397,67 @@ a.saat-cipi:hover { border-color: var(--safran); background: rgba(240, 178, 74, 
 /* ------------------------------------------------------------------
    8) KAYDIRMA ANİMASYONLARI (wwwroot/js/site.js ile birlikte)
    - Sınıfları JS ekler: JS çalışmazsa hiçbir şey gizlenmez.
-   - Başlangıç durumu tamamen görünmez DEĞİL (opacity .35): içerik her an okunur.
+   - Başlangıç saydam (opacity 0) ama yalnızca <html class="js"> varken; site.js gözlemci yoksa ya da
+     "hareketi azalt" açıksa hepsine hemen "gorundu" ekler, yani içerik hiçbir durumda gizli kalmaz.
    - prefers-reduced-motion: hareket istemeyen kullanıcıda hepsi kapalı.
    ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: no-preference) {
-  .js .belir { opacity: .35; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+  .js .belir { opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
   .js .belir.gorundu { opacity: 1; transform: none; }
 
-  /* Ana sayfanın TEK animasyonu: açılışta canlı boş saatler fişi hafifçe yerine oturur */
-  .js .randevu-fisi { animation: fis-gelis .8s cubic-bezier(.2, .7, .2, 1) both .1s; }
-  @keyframes fis-gelis { from { transform: translateY(16px); opacity: .4; } to { transform: none; opacity: 1; } }
+  /* ---- Ana sayfa açılışı: tek orkestre an ----
+     Başlık satırları maskelerinin altından sırayla yükselir (0 / 0,12 sn), metin ve butonlar
+     0,35–0,45 sn'de, fiş 0,25 sn'de gelir. Sonra sayfa durur; kaydırmadıkça hiçbir şey oynamaz. */
+  .acilis .satir { display: block; overflow: hidden; padding-bottom: .06em; }   /* padding: ş, ç kuyrukları kesilmesin */
+  .acilis .satir > span { display: inline-block; animation: satir-yuksel .9s cubic-bezier(.2, .8, .2, 1) both; }
+  .acilis .satir:nth-child(2) > span { animation-delay: .12s; }
+  @keyframes satir-yuksel { from { transform: translateY(105%); } to { transform: none; } }
+  .acilis-sonra { animation: yumusak-gelis .8s cubic-bezier(.2, .7, .2, 1) both .35s; }
+  .acilis-sonra + .acilis-sonra { animation-delay: .45s; }
+  .js .randevu-fisi { animation: yumusak-gelis .9s cubic-bezier(.2, .7, .2, 1) both .25s; }
+  @keyframes yumusak-gelis { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Canlı nokta: yavaş nabız (3 sn'de bir), dikkat çekmeden "canlı" der */
+  .canli-isaret { animation: nabiz 3s ease-out infinite; }
+  @keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(111, 211, 160, .45); } 70%, 100% { box-shadow: 0 0 0 9px rgba(111, 211, 160, 0); } }
+
+  /* Boş saat çipleri: API cevabı gelince soldan sağa tek tek (her biri 40 ms arayla) */
+  .saat-cipi.yeni { animation: cip-gelis .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+  @keyframes cip-gelis { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+
+  /* Kaydırınca: "sirali" listenin satırları sırayla (55 ms arayla). Başlangıç tamamen saydam AMA
+     yalnızca <html class="js"> varken; JS yoksa ya da gözlemci yoksa site.js hepsini hemen gösterir. */
+  .js .belir .sirali > * { opacity: 0; transform: translateY(10px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .2, 1); }
+  .js .belir.gorundu .sirali > * { opacity: 1; transform: none; transition-delay: calc(.12s + var(--i, 0) * 55ms); }
 }
 @media (prefers-reduced-motion: reduce) {
   .iskelet { animation: none; }
+}
+
+/* ---- İmleci izleyen ışık (site.js → --mx, --my). Fare yoksa hiç görünmez. ---- */
+.isikli { position: relative; }
+.isikli::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 0%), rgba(240, 178, 74, .09), transparent 60%);
+  opacity: 0; transition: opacity .4s ease;
+}
+.isikli:hover::after { opacity: 1; }
+
+/* ---- Küçük etkileşimler: yalnızca kullanıcı bir şeye dokunduğunda ---- */
+.hizmet-listesi li { position: relative; transition: background-color .25s ease; }
+.hizmet-listesi li::before {         /* solda safran çizgi: üstüne gelince yukarıdan aşağı uzar */
+  content: ""; position: absolute; left: -.9rem; top: 25%; bottom: 25%; width: 2px; border-radius: 2px;
+  background: var(--safran); transform: scaleY(0); transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+}
+.hizmet-listesi li:hover::before { transform: scaleY(1); }
+.hizmet-listesi li:hover .hizmet-ad { color: #fff; }
+.hekim-bas { transition: box-shadow .3s ease, transform .3s ease; }
+.hekim:hover .hekim-bas { transform: scale(1.06); box-shadow: 0 0 0 4px rgba(111, 165, 146, .18); }
+a.saat-cipi { transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
+a.saat-cipi:hover { transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) {
+  .hizmet-listesi li::before, .hekim-bas, a.saat-cipi { transition: none; }
+  .hekim:hover .hekim-bas, a.saat-cipi:hover { transform: none; }
 }
 
 
