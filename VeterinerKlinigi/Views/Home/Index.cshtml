@@ -5,7 +5,7 @@
     - Önünde, derinlikte dizilmiş cam "randevu fişleri" (düz HTML + CSS 3D). Kaydırdıkça kamera
       içlerinden geçiyormuş gibi yaklaşır ve dağılırlar.
     - Ortadaki başlık üç aşamada değişir; sonunda tek bir cam kart ve "Kliniğe gir" butonu.
-    - 25.11: "Atla" kaldırıldı. "Kliniğe gir" giriş yapmamış kullanıcıyı GİRİŞ sayfasına götürür; girişten sonra
+    - 25.11: "Atla" kaldırıldı. Son kartta iki buton: "Üye ol" → kayıt sayfası, "Kliniğe gir" giriş yapmamış kullanıcıyı GİRİŞ sayfasına götürür; girişten sonra
       ana sayfa açılır (HesapController.RoleGoreYonlendirAsync). Giriş yapmış kullanıcı doğrudan ana sayfaya gider.
 
     NASIL ÇALIŞIR? Sayfa 500vh uzunluğunda bir "yol"dur; sahne bu yol boyunca ekrana yapışık
@@ -66,8 +66,15 @@
         @* Son aşama: tek cam kart *@
         <div class="son-kart" id="sonKart" data-no="3">
             <h2>@ViewData["KlinikAdi"]</h2>
-            <p>@(girisYapmis ? "Hizmetlerimizi, hekimlerimizi ve bugünkü boş saatleri görün." : "Giriş yapın; hizmetler, hekimler ve bugünkü boş saatler sizi bekliyor.")</p>
-            <a class="btn btn-primary btn-lg" href="@kliniginAdresi">Kliniğe gir</a>
+            <p>@(girisYapmis ? "Hizmetlerimizi, hekimlerimizi ve bugünkü boş saatleri görün." : "Hesabınız varsa giriş yapın, yoksa birkaç adımda üye olun.")</p>
+            @* Giriş yapmamış ziyaretçi için iki kapı: "Kliniğe gir" → giriş sayfası, "Üye ol" → kayıt sayfası *@
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-lg" href="@kliniginAdresi">Kliniğe gir</a>
+                @if (!girisYapmis)
+                {
+                    <a class="btn btn-koyu btn-lg" asp-controller="Hesap" asp-action="Kayit">Üye ol</a>
+                }
+            </div>
         </div>
 
         <p class="kaydir-ipucu" aria-hidden="true">Kaydırın</p>
