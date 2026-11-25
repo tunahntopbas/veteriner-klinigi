@@ -60,7 +60,7 @@ public class RandevuController : Controller
         if (tarih is not null) vm.Tarih = tarih.Value;
         await SecenekleriDoldurAsync(vm);
 
-        if (vm.HayvanSecenekleri.Count == 0)
+        if (vm.Hayvanlar.Count == 0)
         {
             TempData["Hata"] = "Randevu almak için önce bir evcil hayvan ekleyin.";
             return RedirectToAction("Ekle", "EvcilHayvan");
@@ -168,9 +168,7 @@ public class RandevuController : Controller
     // Açılır listeler: kullanıcının KENDİ hayvanları ve aktif hizmetler.
     private async Task SecenekleriDoldurAsync(RandevuFormVM vm)
     {
-        vm.HayvanSecenekleri = (await _hayvanlar.ListeleAsync(User.Bilgi()))
-            .Select(h => new SelectListItem($"{h.Ad} ({h.Tur})", h.Id.ToString(), h.Id == vm.EvcilHayvanId)).ToList();
-        vm.HizmetSecenekleri = (await _hizmetler.ListeleAsync(sadeceAktifler: true))
-            .Select(h => new SelectListItem($"{h.Ad} — {h.SureDakika} dk — {h.Ucret:N2} TL", h.Id.ToString(), h.Id == vm.HizmetId)).ToList();
+        vm.Hayvanlar = await _hayvanlar.ListeleAsync(User.Bilgi());
+        vm.HizmetListesi = await _hizmetler.ListeleAsync(sadeceAktifler: true);
     }
 }

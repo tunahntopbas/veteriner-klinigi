@@ -1,3 +1,4 @@
+using VeterinerKlinigi.Models;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -89,10 +90,14 @@ public class RandevuFormVM
 {
     public int Id { get; set; }
 
+    // Required: kartla (radio) seçimde hiçbiri işaretli değilse alan hiç gönderilmez; mesaj Türkçe olsun
+    [Required(ErrorMessage = "Hayvan seçin.")]
     [Range(1, int.MaxValue, ErrorMessage = "Hayvan seçin.")]
     [Display(Name = "Hayvan")]
     public int EvcilHayvanId { get; set; }
 
+    // Required: kartla (radio) seçimde hiçbiri işaretli değilse alan hiç gönderilmez; mesaj Türkçe olsun
+    [Required(ErrorMessage = "Hizmet seçin.")]
     [Range(1, int.MaxValue, ErrorMessage = "Hizmet seçin.")]
     [Display(Name = "Hizmet")]
     public int HizmetId { get; set; }
@@ -113,8 +118,11 @@ public class RandevuFormVM
     [Display(Name = "Not (şikâyet, özel durum)")]
     public string? SahipNotu { get; set; }
 
-    public List<SelectListItem> HayvanSecenekleri { get; set; } = [];
-    public List<SelectListItem> HizmetSecenekleri { get; set; } = [];
+    // Form seçenekleri (POST'ta gelmez, controller her seferinde yeniden doldurur).
+    // 25.11: açılır liste yerine kartlarla seçim yapıldığı için entity listesi taşınıyor
+    // (hayvanın fotoğrafı/türü, hizmetin süresi ve ücreti kartta görünsün diye).
+    public List<EvcilHayvan> Hayvanlar { get; set; } = [];
+    public List<Hizmet> HizmetListesi { get; set; } = [];
 }
 
 /// <summary>ÖDEV 3.4 — Hekimin muayene notu formu.</summary>

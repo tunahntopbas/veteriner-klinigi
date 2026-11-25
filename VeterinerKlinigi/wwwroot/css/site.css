@@ -254,8 +254,7 @@ table.kart-golge { border-collapse: separate; border-spacing: 0; overflow: hidde
 .ozet-sayi { font-family: var(--yazi-baslik); font-size: 1.9rem; font-weight: 700; color: #fff; }
 
 /* Randevu formu: boş saat düğmeleri — seçili saat safran */
-.saat-dugmesi { min-width: 4.5rem; font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; }
-.btn.saat-dugmesi.active { background: var(--safran); color: var(--safran-ustu); border-color: var(--safran); }
+
 
 /* Hata yokken doğrulama özeti kutusu görünmesin (Tag Helper boş div üretir). */
 .validation-summary-valid { display: none; }
@@ -700,4 +699,98 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ozet-kart.sayi, .cizelge-randevu, .serit-avatar, .gun-cipi, .su-an { transition: none; }
+}
+
+
+/* ------------------------------------------------------------------
+   11) RANDEVU ALMA — adım adım (Views/Randevu/Form.cshtml)
+   Solda dört adım (numara gerçek sıra), sağda yapışkan canlı özet + gönder.
+   Seçimler radio/düğme; seçili olan safran çerçeve. Tamamlanan adımın numarası dolar.
+   ------------------------------------------------------------------ */
+.randevu-duzeni { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--b8); align-items: start; margin-bottom: var(--b16); }
+@media (max-width: 991.98px) { .randevu-duzeni { grid-template-columns: minmax(0, 1fr); } }
+.adim-listesi { display: grid; gap: var(--b6); min-width: 0; }
+
+.adim-kutusu { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: var(--kose-buyuk); padding: var(--b6); margin: 0; min-width: 0; }
+/* legend: float + tam genişlik → çerçevenin ÜSTÜNE değil kutunun İÇİNE yerleşir (Bootstrap'in yaklaşımı) */
+.adim-kutusu legend + * { clear: left; }
+.adim-kutusu legend { float: left; width: 100%; display: flex; align-items: center; gap: var(--b3); font-family: var(--yazi-baslik); font-size: 1.15rem; font-weight: 650; color: #fff; margin-bottom: var(--b4); padding: 0; }
+.adim-kutusu .adim-no { width: 1.9rem; height: 1.9rem; border-radius: 50%; display: grid; place-items: center; flex: none;
+                        font-family: var(--yazi-veri); font-size: .85rem; font-weight: 600; color: var(--soluk);
+                        border: 1.5px solid var(--cizgi-guclu); transition: background-color .3s ease, color .3s ease, border-color .3s ease; }
+.adim-kutusu.tamam .adim-no { background: var(--adacayi); border-color: var(--adacayi); color: #0B1A1A; }
+
+/* Seçim kartları (hayvan, hizmet): gerçek radio görünmez ama klavyeyle seçilebilir */
+.secim-izgarasi { display: grid; gap: var(--b3); }
+.secim-izgarasi.hayvanlar { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+.secim-izgarasi.hizmetler { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.secim-karti { position: relative; display: flex; align-items: center; gap: var(--b3); padding: var(--b3) var(--b4); border-radius: var(--kose-orta);
+               border: 1px solid var(--cizgi-guclu); background: rgba(255, 255, 255, .02); cursor: pointer;
+               transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
+.secim-karti:hover { border-color: rgba(255, 255, 255, .3); }
+.secim-karti input { position: absolute; opacity: 0; pointer-events: none; }
+.secim-karti:has(input:checked) { border-color: var(--safran); background: rgba(240, 178, 74, .08); }
+.secim-karti:has(input:focus-visible) { outline: 2px solid var(--safran); outline-offset: 2px; }
+.secim-avatar { width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none; display: grid; place-items: center; overflow: hidden;
+                background: var(--yuzey-2); font-family: var(--yazi-baslik); font-weight: 700; color: #fff; }
+.secim-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.secim-metin { display: flex; flex-direction: column; min-width: 0; }
+.secim-metin strong { color: #fff; font-weight: 600; }
+.secim-metin small { color: var(--soluk); }
+.secim-karti.hizmet { justify-content: space-between; }
+.secim-ucret { color: var(--metin); white-space: nowrap; }
+.secim-karti:has(input:checked) .secim-ucret { color: var(--safran); }
+
+/* Gün şeridi: 14 gün, yatay kayar; kapalı günler pasif */
+.gun-seridi { display: flex; gap: var(--b2); overflow-x: auto; padding-bottom: var(--b2); scrollbar-width: thin; scroll-snap-type: x proximity; }
+.gun-dugmesi { flex: none; width: 4.2rem; display: grid; justify-items: center; gap: 1px; padding: var(--b2) 0; scroll-snap-align: start;
+               border-radius: var(--kose-orta); border: 1px solid var(--cizgi-guclu); background: transparent; color: var(--metin);
+               transition: border-color .2s ease, background-color .2s ease; }
+.gun-dugmesi:hover:not(:disabled) { border-color: rgba(255, 255, 255, .3); }
+.gun-dugmesi[aria-pressed="true"] { background: var(--safran); border-color: var(--safran); color: var(--safran-ustu); }
+.gun-dugmesi:disabled { opacity: .35; cursor: not-allowed; text-decoration: line-through; }
+.gun-dugmesi:focus-visible { outline: 2px solid var(--safran); outline-offset: 2px; }
+.gd-gun, .gd-ay { font-size: .72rem; }
+.gd-sayi { font-size: 1.15rem; font-weight: 600; }
+.diger-tarih { margin-top: var(--b4); max-width: 13rem; }
+
+/* Saat ızgarası: hekim başına bir blok, sabah ve öğleden sonra ayrı satır */
+#uygunHekimler { transition: opacity .2s ease; }
+#uygunHekimler.yukleniyor { opacity: .45; }
+.hekim-saatleri + .hekim-saatleri { margin-top: var(--b6); padding-top: var(--b6); border-top: 1px solid var(--cizgi); }
+.hs-ust { display: flex; justify-content: space-between; align-items: baseline; gap: var(--b3); flex-wrap: wrap; margin-bottom: var(--b3); }
+.hs-ust strong { color: #fff; }
+.hs-ust span { color: var(--soluk); font-size: .85rem; }
+.saat-satiri { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--b3); align-items: start; }
+.saat-satiri + .saat-satiri { margin-top: var(--b2); }
+.saat-etiketi { color: var(--soluk); font-size: .85rem; padding-top: .4rem; }
+.saat-izgarasi { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.4rem, 1fr)); gap: var(--b2); }
+.saat-dugmesi { font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; font-size: .9rem; padding: .4rem 0;
+                border-radius: var(--kose-kucuk); border: 1px solid var(--cizgi-guclu); background: transparent; color: var(--metin);
+                transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
+.saat-dugmesi:hover { border-color: var(--safran); background: rgba(240, 178, 74, .1); transform: translateY(-1px); }
+.saat-dugmesi[aria-pressed="true"] { background: var(--safran); border-color: var(--safran); color: var(--safran-ustu); font-weight: 600; }
+.saat-dugmesi:focus-visible { outline: 2px solid var(--safran); outline-offset: 2px; }
+.bos-saat-yok { color: var(--soluk); margin: 0; }
+@media (max-width: 575.98px) { .saat-satiri { grid-template-columns: minmax(0, 1fr); gap: var(--b1); } }
+
+/* Canlı özet: masaüstünde yapışkan (kaydırırken yanınızda durur) */
+.randevu-ozeti { position: sticky; top: 5.5rem; background: var(--cam-zemin); border: 1px solid var(--cam-cizgi); border-radius: var(--kose-buyuk); padding: var(--b6);
+                 -webkit-backdrop-filter: var(--cam-bulanik); backdrop-filter: var(--cam-bulanik); }
+@media (max-width: 991.98px) { .randevu-ozeti { position: static; } }
+.randevu-ozeti dl { margin: 0 0 var(--b4); display: grid; gap: var(--b3); }
+.randevu-ozeti dt { font-size: .75rem; font-weight: 500; color: #7E948E; }
+.randevu-ozeti dd { margin: 0; color: #fff; font-weight: 500; }
+.ozet-tutar { display: flex; justify-content: space-between; padding: var(--b3) 0; margin-bottom: var(--b4); border-top: 1px solid var(--cam-cizgi); border-bottom: 1px solid var(--cam-cizgi); color: var(--soluk); font-size: .9rem; }
+.ozet-tutar strong { color: var(--metin); margin-left: var(--b1); }
+.ozet-not { font-size: .8rem; color: var(--soluk); margin: var(--b3) 0 var(--b2); }
+.ozet-vazgec { font-size: .9rem; color: var(--soluk); }
+@media (prefers-reduced-motion: no-preference) {
+  .saat-dugmesi.yeni { animation: cip-gelis .4s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--i, 0), 20) * 25ms); }
+  .adim-kutusu.tamam .adim-no { animation: tamam-pul .35s ease; }
+  @keyframes tamam-pul { 50% { transform: scale(1.15); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .secim-karti, .gun-dugmesi, .saat-dugmesi, .adim-kutusu .adim-no { transition: none; }
+  .saat-dugmesi:hover { transform: none; }
 }
