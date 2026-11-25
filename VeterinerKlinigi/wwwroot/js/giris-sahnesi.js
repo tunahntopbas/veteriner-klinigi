@@ -65,23 +65,23 @@ function baslat() {
     anaIsik.shadow.radius = 6;
     sahne.add(anaIsik);
     // Dolgu (fill): soldan, zayıf ve serin; gölgeleri tamamen karartmaz.
-    const dolguIsik = new THREE.DirectionalLight(0xbfe0d3, 0.7);
+    const dolguIsik = new THREE.DirectionalLight(0xdbe8f4, 0.8);
     dolguIsik.position.set(-4, 2, 3);
     sahne.add(dolguIsik);
     // Arka (rim): arkadan, kenar parlaması. Biri adaçayı, biri safran → modelin silueti zeminden ayrılır.
-    const arkaAdacayi = new THREE.PointLight(0x6fa592, 18, 12, 2);
+    const arkaAdacayi = new THREE.PointLight(0x7fb0dc, 14, 12, 2);
     arkaAdacayi.position.set(-2.5, 2.2, -2.5);
     sahne.add(arkaAdacayi);
-    const arkaSafran = new THREE.PointLight(0xf0b24a, 10, 12, 2);
+    const arkaSafran = new THREE.PointLight(0xd9b98a, 8, 12, 2);
     arkaSafran.position.set(2.6, 1.6, -2.2);
     sahne.add(arkaSafran);
     // Ortam: gölgeli taraf simsiyah olmasın.
-    sahne.add(new THREE.HemisphereLight(0xdfeee8, 0x0b1a1a, 0.55));
+    sahne.add(new THREE.HemisphereLight(0xf4f8fb, 0xc9d3db, 0.9));
 
     // ---------------- Zemin: sadece gölgeyi gösteren görünmez düzlem ----------------
     const zemin = new THREE.Mesh(
         new THREE.CircleGeometry(4, 48),
-        new THREE.ShadowMaterial({ opacity: 0.38 })
+        new THREE.ShadowMaterial({ opacity: 0.16 })
     );
     zemin.rotation.x = -Math.PI / 2;
     zemin.receiveShadow = true;

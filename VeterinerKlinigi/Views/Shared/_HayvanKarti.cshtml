@@ -23,7 +23,8 @@
     var kalanGun = siradaki is null ? 0 : siradaki.SonrakiDozTarihi!.Value.DayNumber - bugun.DayNumber;
 }
 <article class="hayvan-kart">
-    <div class="hayvan-gorsel">
+    @* view-transition-name: detay sayfasındaki büyük görselle aynı ad → tıklayınca kart detaya "dönüşür" (site.css §13) *@
+    <div class="hayvan-gorsel" style="view-transition-name: hayvan-gorsel-@Model.Id">
         @if (Model.FotografDosyaAdi is not null)
         {
             <img src="@Url.Action("Fotograf", "EvcilHayvan", new { area = "", id = Model.Id })" alt="@Model.Ad fotoğrafı" loading="lazy" />
@@ -34,7 +35,7 @@
         }
     </div>
     <div class="hayvan-govde">
-        <h2 class="hayvan-ad">
+        <h2 class="hayvan-ad" style="view-transition-name: hayvan-ad-@Model.Id">
             <a asp-area="" asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@Model.Id" class="stretched-link">@Model.Ad</a>
         </h2>
         <p class="hayvan-tur">@Model.Tur@(Model.Irk is null ? "" : ", " + Model.Irk)</p>

@@ -22,7 +22,7 @@
 
 @* ---- Üst kısım: kimlik ---- *@
 <section class="hayvan-ust">
-    <div class="hayvan-gorsel buyuk">
+    <div class="hayvan-gorsel buyuk" style="view-transition-name: hayvan-gorsel-@Model.Id">
         @if (Model.FotografDosyaAdi is not null)
         {
             <img src="@Url.Action("Fotograf", "EvcilHayvan", new { id = Model.Id })" alt="@Model.Ad fotoğrafı" />
@@ -33,7 +33,7 @@
         }
     </div>
     <div class="hayvan-kimlik">
-        <h1>@Model.Ad</h1>
+        <h1 style="view-transition-name: hayvan-ad-@Model.Id">@Model.Ad</h1>
         <p class="hayvan-tur">@Model.Tur@(Model.Irk is null ? "" : ", " + Model.Irk)</p>
         <dl class="hayvan-olcu">
             <div><dt>Yaş</dt><dd>@yasYazi</dd></div>

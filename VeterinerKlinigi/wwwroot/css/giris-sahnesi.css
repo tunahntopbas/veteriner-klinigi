@@ -9,7 +9,7 @@
       Tek giriş değişkeni: --ilerleme (0 → 1). JS her karede sahneye yazar.
    ================================================================== */
 
-.giris-sayfasi { min-height: 100vh; }
+.giris-sayfasi { min-height: 100vh; background: radial-gradient(60rem 40rem at 70% 20%, #FFFFFF, transparent 70%), var(--zemin); }
 
 /* Üst şerit: yalnızca marka. Her iki hâlde de görünür. ("Atla" 25.11'de kaldırıldı; tek çıkış "Kliniğe gir".) */
 .giris-ust {
@@ -23,10 +23,10 @@
 .cam-fis, .son-kart {
   background: var(--cam-zemin); border: 1px solid var(--cam-cizgi);
   -webkit-backdrop-filter: var(--cam-bulanik); backdrop-filter: var(--cam-bulanik);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 20px 50px -24px rgba(0, 0, 0, .7);
+  box-shadow: 0 2px 4px rgba(14, 28, 42, .05), 0 22px 48px -22px rgba(14, 28, 42, .28);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .cam-fis, .son-kart { background: rgba(24, 50, 56, .92); }
+  .cam-fis, .son-kart { background: #fff; }
 }
 
 
@@ -43,10 +43,10 @@
   /* Görüntünün kare kenarları zemindeki renk lekeleriyle çakışmasın: kenarları yumuşakça sil */
   -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); }
 .giris-metinleri { display: grid; gap: var(--b6); width: 100%; }
-.giris-metni h1, .giris-metni h2 { font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; color: #fff; margin-bottom: var(--b3); }
+.giris-metni h1, .giris-metni h2 { font-size: clamp(2.4rem, 6vw, 4.8rem); letter-spacing: -0.02em; line-height: 1; color: var(--metin); margin-bottom: var(--b3); }
 .giris-metni p { color: var(--soluk); font-size: 1.1rem; max-width: 42ch; margin: 0; }
 .son-kart { border-radius: var(--kose-buyuk); padding: var(--b8); width: 100%; }
-.son-kart h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); color: #fff; margin-bottom: var(--b2); }
+.son-kart h2 { font-size: clamp(2rem, 3.6vw, 2.8rem); color: var(--metin); margin-bottom: var(--b2); }
 .son-kart p { color: var(--soluk); margin-bottom: var(--b6); }
 
 
@@ -98,7 +98,7 @@
   position: absolute; left: 0; top: 0;
   display: flex; align-items: baseline; gap: var(--b2); white-space: nowrap;
   padding: var(--b3) var(--b4); border-radius: 12px;
-  color: #fff; font-weight: 600; font-size: 1rem;
+  color: var(--metin); font-weight: 600; font-size: 1rem;
   transform:
     translate(-50%, -50%)
     translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--derinlik) * 1px))
@@ -107,7 +107,7 @@
   opacity: min(clamp(0, (var(--derinlik) + 2700) / 600, 1), clamp(0, (600 - var(--derinlik)) / 400, 1));
   will-change: transform, opacity;           /* yalnızca bu 8 öğe; tarayıcı ayrı katmanda tutar */
 }
-.sahne-3d .cam-fis .veri { color: var(--safran); font-weight: 600; }
+.sahne-3d .cam-fis .veri { color: var(--mavi); font-weight: 600; font-variant-numeric: tabular-nums; }
 .sahne-3d .cam-fis small { color: var(--soluk); font-weight: 500; font-size: .85em; }
 
 /* ---- Üç aşamalı metin ----
@@ -148,8 +148,8 @@
   display: block; position: absolute; right: var(--b4); top: 30%; bottom: 30%; width: 2px;
   background: var(--cizgi-guclu); border-radius: 2px; overflow: hidden;
 }
-.sahne-3d .ilerleme-cubugu span { display: block; height: 100%; background: var(--safran); transform-origin: top; transform: scaleY(var(--ilerleme)); }
-.sahne-3d .fis-notu { display: block; position: absolute; left: max(var(--b6), 6vw); bottom: var(--b4); margin: 0; font-size: .75rem; color: #6F8680; }
+.sahne-3d .ilerleme-cubugu span { display: block; height: 100%; background: var(--mavi); transform-origin: top; transform: scaleY(var(--ilerleme)); }
+.sahne-3d .fis-notu { display: block; position: absolute; left: max(var(--b6), 6vw); bottom: var(--b4); margin: 0; font-size: .75rem; color: var(--soluk-2); }
 
 /* ---- Mobil: daha az fiş (performans), metin ve kart altta ---- */
 @media (max-width: 767.98px) {

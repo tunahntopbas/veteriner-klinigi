@@ -604,4 +604,4 @@ Tüm dosyalar projenin içindedir (`wwwroot/`); uygulama çalışırken internet
 | Bootstrap 5.3, jQuery, jQuery Validation | `wwwroot/lib/` | MIT |
 | [Three.js](https://threejs.org) r170 (giriş sahnesindeki 3D çizim) | `wwwroot/lib/three/` | MIT |
 | 3D model: "Shiba Inu", [Quaternius](https://quaternius.com), [poly.pizza/m/y4wdQpg767](https://poly.pizza/m/y4wdQpg767) | `wwwroot/models/shiba-inu.glb` | CC0 1.0 (kamu malı) |
-| Yazı tipleri: Bricolage Grotesque, Inter, JetBrains Mono | `wwwroot/fonts/` | SIL Open Font License 1.1 |
+| Yazı tipleri: Instrument Serif, Hanken Grotesk | Google Fonts (`_Layout.cshtml`) | SIL Open Font License 1.1 |

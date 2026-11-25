@@ -18,6 +18,12 @@
     <p class="klinik-durumu acilis-sonra">
         <span class="durum-noktasi @(Model.KlinikAcik ? "acik" : "kapali")" aria-hidden="true"></span>@Model.KlinikDurumu
     </p>
+    @* İMZA: hasta monitörü (EKG) çizgisi. Gri iz bir kez çizilir, içinden mavi bir atım akar (site.css §13 i).
+       pathLength="1": çizgi uzunluğu ne olursa olsun CSS'te 0–1 arası kesir olarak çalışırız. *@
+    <svg class="ekg" viewBox="0 0 1200 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path class="ekg-iz" pathLength="1" d="M0 44 H430 l14 0 l8 -10 l8 10 h16 l10 -36 l12 56 l10 -38 l8 18 h40 l10 -6 l10 6 H780 l10 -8 l8 8 h20 l10 -30 l12 44 l8 -22 h30 H1200" />
+        <path class="ekg-atim" pathLength="1" d="M0 44 H430 l14 0 l8 -10 l8 10 h16 l10 -36 l12 56 l10 -38 l8 18 h40 l10 -6 l10 6 H780 l10 -8 l8 8 h20 l10 -30 l12 44 l8 -22 h30 H1200" />
+    </svg>
 </div>
 
 @if (Model.Uye is not null)
