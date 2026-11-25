@@ -4,7 +4,7 @@
    Fikir: muayenehanenin temiz, aydınlık ve sakin hali. Soğuk beyaz zemin,
    saf beyaz yüzeyler, ince çizgiler, lacivert-siyah mürekkep.
    Premium his üç şeyden gelir:
-     1) iri SERIF başlık ve rakamlar (Instrument Serif) + sade grotesk gövde (Hanken Grotesk),
+     1) tek yazı ailesi (Plus Jakarta Sans): kalın, sıkı başlıklar ve rakamlar + aynı ailenin sade gövdesi,
      2) bol boşluk ve çok yumuşak, katmanlı gölgeler (kenarlık yerine derinlik),
      3) tek bir imza: başlığın altından geçen hasta monitörü (EKG) çizgisi.
    Renkler: ana eylem lacivert-siyah, seçim/odak "steril mavi", küçük vurgular pirinç.
@@ -21,9 +21,10 @@
 
 /* ------------------------------------------------------------------
    1) YAZI TİPLERİ
-   Instrument Serif (başlık, büyük rakamlar) ve Hanken Grotesk (gövde) _Layout'ta
-   Google Fonts'tan yüklenir. İnternet yoksa sistem serif / sans-serif yazı tipine düşer.
-   Lisans: ikisi de SIL Open Font License.
+   Plus Jakarta Sans (başlık, rakam ve gövde; tek aile) wwwroot/css/yazi-tipleri.css ile
+   projenin içinden (wwwroot/fonts) yüklenir, internet gerekmez. Değişken yazı tipi:
+   tek dosyada 200–800 arası tüm kalınlıklar var. Lisans: SIL Open Font License 1.1.
+   25.11: önce Instrument Serif + Hanken Grotesk denendi, kullanıcı beğenmedi.
    ------------------------------------------------------------------ */
 
 
@@ -70,8 +71,8 @@
   --durum-iptal: #66727D;        --durum-iptal-zemin: #EEF1F3;
 
   /* Yazı */
-  --yazi-baslik: "Instrument Serif", "Iowan Old Style", "Times New Roman", serif;
-  --yazi-govde: "Hanken Grotesk", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --yazi-baslik: "Plus Jakarta Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --yazi-govde: "Plus Jakarta Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
   --yazi-veri: var(--yazi-govde);   /* rakamlar gövde yazı tipinde, eş genişlikli (tabular) */
 
   /* Boşluk ölçeği (4px taban) */
@@ -117,7 +118,7 @@
 /* ------------------------------------------------------------------
    3) TEMEL
    ------------------------------------------------------------------ */
-html { font-size: 16px; font-synthesis: none; }   /* serif tek kalınlık: tarayıcı sahte kalın üretmesin */
+html { font-size: 16px; font-synthesis: none; }   /* değişken yazı tipinde gerçek kalınlıklar var; tarayıcı sahte kalın/eğik üretmesin */
 /* Footer her zaman en altta: body dikey flex, main kalan alanı doldurur */
 body {
   min-height: 100vh; display: flex; flex-direction: column;
@@ -128,9 +129,10 @@ body {
 main#icerik { flex: 1 0 auto; padding-top: var(--b4); }
 main#icerik:focus { outline: none; }
 
-/* Başlıklar: serif, tek kalınlık (400). Büyüklük hiyerarşiyi taşır, kalınlık değil. */
+/* Başlıklar: kalın (700) ve hafif sıkı harf aralığı. Büyük puntoda harfler açılmasın diye
+   letter-spacing eksiye çekilir; küçük başlıklarda daha az. */
 h1, h2, h3, .h1, .h2, .h3, .display-6 {
-  font-family: var(--yazi-baslik); font-weight: 400; letter-spacing: -0.01em;
+  font-family: var(--yazi-baslik); font-weight: 700; letter-spacing: -0.02em;
   text-wrap: balance; line-height: 1.08; color: var(--metin);
 }
 h4, h5, h6, .h4, .h5, .h6 { font-family: var(--yazi-govde); font-weight: 600; letter-spacing: -0.005em; }
@@ -269,7 +271,7 @@ table.kart-golge { border-collapse: separate; border-spacing: 0; overflow: hidde
 .ust-bar .navbar { padding-block: var(--b3); }
 .marka { display: inline-flex; align-items: baseline; gap: var(--b2); text-decoration: none; color: var(--metin); }
 .marka:hover { color: var(--metin); }
-.marka-ad { font-family: var(--yazi-baslik); font-size: 2rem; letter-spacing: -0.02em; line-height: 1; color: var(--metin); }
+.marka-ad { font-family: var(--yazi-baslik); font-weight: 800; font-size: 1.6rem; letter-spacing: -0.028em; line-height: 1; color: var(--metin); }
 .marka-ad .nokta { color: var(--mavi); }
 .marka-alt { font-size: .82rem; color: var(--soluk); font-weight: 500; }
 
@@ -305,7 +307,7 @@ table.kart-golge { border-collapse: separate; border-spacing: 0; overflow: hidde
 .alt-bilgi dl { display: grid; grid-template-columns: auto 1fr; gap: var(--b1) var(--b4); margin: 0; font-variant-numeric: tabular-nums; }
 .alt-bilgi dt { font-weight: 500; color: var(--soluk); }
 .alt-bilgi dd { margin: 0; color: var(--metin); }
-.alt-bilgi .marka-ad { font-size: 1.8rem; }
+.alt-bilgi .marka-ad { font-size: 1.5rem; }
 .alt-bilgi .alt-cizgi { border-top: 1px solid var(--cizgi); margin-top: var(--b8); padding-top: var(--b4); color: var(--soluk-2); font-size: .85rem; }
 
 
@@ -409,7 +411,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 
 /* Sayfa başlığı: solda başlık + kısa bilgi, sağda tek birincil eylem */
 .sayfa-basi { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: var(--b4); margin-bottom: var(--b8); }
-.sayfa-basi h1 { font-size: clamp(2.4rem, 4.6vw, 3.4rem); letter-spacing: -0.015em; color: var(--metin); margin: 0; }
+.sayfa-basi h1 { font-size: clamp(2rem, 3.8vw, 2.75rem); letter-spacing: -0.022em; color: var(--metin); margin: 0; }
 .sayfa-alt { color: var(--soluk); margin: var(--b1) 0 0; }
 
 .geri-baglanti { display: inline-flex; align-items: center; gap: var(--b2); color: var(--soluk); text-decoration: none; font-size: .9rem; margin-bottom: var(--b4); }
@@ -431,7 +433,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 /* ---- Giriş ve kayıt (Views/Hesap) ---- */
 .hesap-kutusu { max-width: 28rem; margin: var(--b8) auto var(--b16); }
 .hesap-kutusu .panel { padding: var(--b8); margin: 0; }
-.hesap-kutusu h1 { font-size: 2.8rem; letter-spacing: -0.015em; color: var(--metin); margin-bottom: var(--b1); }
+.hesap-kutusu h1 { font-size: 2.25rem; letter-spacing: -0.022em; color: var(--metin); margin-bottom: var(--b1); }
 .hesap-kutusu .card-body { padding: 0 !important; }
 .hesap-alt { margin: var(--b6) 0 0; text-align: center; color: var(--soluk); }
 @media (max-width: 575.98px) { .hesap-kutusu .panel { padding: var(--b6); } }
@@ -448,10 +450,10 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 
 .hayvan-gorsel { aspect-ratio: 16 / 10; background: radial-gradient(120% 90% at 30% 20%, rgba(47, 111, 168, .10), transparent 60%), var(--yuzey-2); display: grid; place-items: center; overflow: hidden; }
 .hayvan-gorsel img { width: 100%; height: 100%; object-fit: cover; }
-.hayvan-harf { font-family: var(--yazi-baslik); font-size: 5.5rem; line-height: 1; color: var(--mavi); letter-spacing: -0.05em; }
+.hayvan-harf { font-family: var(--yazi-baslik); font-weight: 800; font-size: 4.6rem; line-height: 1; color: var(--mavi); letter-spacing: -0.05em; }
 
 .hayvan-govde { padding: var(--b4) var(--b6) var(--b6); display: flex; flex-direction: column; gap: var(--b2); flex: 1; }
-.hayvan-ad { font-family: var(--yazi-baslik); font-size: 1.9rem; letter-spacing: -0.01em; line-height: 1.05; margin: 0; color: var(--metin); }
+.hayvan-ad { font-family: var(--yazi-baslik); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1.05; margin: 0; color: var(--metin); }
 .hayvan-tur { color: var(--soluk); margin: 0; }
 .hayvan-sahip { font-size: .85rem; color: var(--soluk); margin: 0; }
 
@@ -544,7 +546,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
    Kartlar açılışta sırayla gelir: style="--i:0..5" → 80 ms arayla.
    ------------------------------------------------------------------ */
 .ozet-ust { margin: var(--b4) 0 var(--b8); }
-.ozet-selam { font-size: clamp(2.8rem, 7vw, 4.8rem); letter-spacing: -0.02em; line-height: 1; color: var(--metin); margin: 0 0 var(--b3); }
+.ozet-selam { font-weight: 800; font-size: clamp(2.3rem, 5.6vw, 3.9rem); letter-spacing: -0.028em; line-height: 1.02; color: var(--metin); margin: 0 0 var(--b3); }
 .klinik-durumu { color: var(--soluk); margin: 0; display: flex; align-items: center; gap: var(--b2); }
 .durum-noktasi { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .durum-noktasi.acik { background: var(--durum-onaylandi); box-shadow: 0 0 0 4px rgba(35, 112, 74, 0.16); }
@@ -566,13 +568,13 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 .ozet-kart.siradaki { border-color: rgba(47, 111, 168, 0.28); background:
   radial-gradient(120% 140% at 100% 0%, rgba(47, 111, 168, 0.1), transparent 55%), var(--yuzey); }
 .siradaki-govde { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--b6); flex-wrap: wrap; }
-.siradaki-ne { font-family: var(--yazi-baslik); font-size: clamp(1.9rem, 3.2vw, 2.5rem); letter-spacing: -0.01em; line-height: 1.05; color: var(--metin); margin: 0 0 var(--b1); }
+.siradaki-ne { font-family: var(--yazi-baslik); font-weight: 700; font-size: clamp(1.6rem, 2.6vw, 2.05rem); letter-spacing: -0.022em; line-height: 1.05; color: var(--metin); margin: 0 0 var(--b1); }
 .siradaki-kim { color: var(--metin); margin: 0 0 var(--b3); }
 .siradaki-zaman { color: var(--soluk); margin: 0; display: flex; align-items: center; gap: var(--b3); flex-wrap: wrap; }
 .siradaki-bos { color: var(--soluk); font-size: 1.05rem; }
 .ozet-kart.siradaki .btn { margin-top: var(--b2); }
 .geri-sayim { text-align: right; }
-.geri-sayim-sayi { display: block; font-family: var(--yazi-baslik); font-size: clamp(2.6rem, 5vw, 4rem); color: var(--pirinc); line-height: 1; font-variant-numeric: tabular-nums; }
+.geri-sayim-sayi { display: block; font-family: var(--yazi-baslik); font-weight: 800; letter-spacing: -0.025em; font-size: clamp(2.4rem, 4.4vw, 3.5rem); color: var(--pirinc); line-height: 1; font-variant-numeric: tabular-nums; }
 .geri-sayim-etiket { color: var(--soluk); font-size: .88rem; }
 .siradaki-alt { display: flex; gap: var(--b6); margin-top: var(--b6); padding-top: var(--b4); border-top: 1px solid var(--cizgi); font-size: .92rem; }
 .siradaki-alt a { color: var(--metin); }
@@ -637,7 +639,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 .su-an time { position: absolute; right: 0; top: -1.4rem; font-size: .75rem; font-weight: 600; color: var(--mavi); }
 @media (max-width: 575.98px) { .gun-cizelgesi { height: 30rem; } }
 
-.buyuk-sayi { font-family: var(--yazi-baslik); font-size: 3.4rem; line-height: 1; color: var(--metin); margin: 0 0 var(--b4); }
+.buyuk-sayi { font-family: var(--yazi-baslik); font-weight: 800; letter-spacing: -0.025em; font-size: 2.9rem; line-height: 1; color: var(--metin); margin: 0 0 var(--b4); }
 .kart-tam-baglanti { display: block; color: var(--metin); font-weight: 600; text-decoration: none; }
 .kart-tam-baglanti::after { content: ""; float: right; width: .55rem; height: .55rem; margin-top: .45rem;
                             border-right: 1.5px solid currentColor; border-top: 1.5px solid currentColor; transform: rotate(45deg); }
@@ -648,7 +650,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 @media (max-width: 991.98px) { .sayi-satiri { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ozet-kart.sayi { display: flex; flex-direction: column; gap: var(--b1); text-decoration: none; color: inherit; transition: border-color .2s ease, transform .2s ease; }
 .ozet-kart.sayi:hover { border-color: var(--cizgi-guclu); transform: translateY(-2px); }
-.sayi-deger { font-family: var(--yazi-baslik); font-size: clamp(2.3rem, 3.6vw, 3.1rem); font-variant-numeric: tabular-nums; color: var(--metin); line-height: 1.1; }
+.sayi-deger { font-family: var(--yazi-baslik); font-weight: 800; letter-spacing: -0.025em; font-size: clamp(2rem, 3.1vw, 2.7rem); font-variant-numeric: tabular-nums; color: var(--metin); line-height: 1.1; }
 .sayi-etiket { color: var(--soluk); font-size: .88rem; }
 .ozet-kart.sayi.dikkat { border-color: rgba(149, 101, 14, 0.35); }
 .ozet-kart.sayi.dikkat .sayi-deger { color: var(--durum-bekliyor); }
@@ -700,7 +702,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 .adim-kutusu { background: var(--yuzey); border: 0; box-shadow: var(--golge-1); border-radius: var(--kose-buyuk); padding: var(--b6); margin: 0; min-width: 0; }
 /* legend: float + tam genişlik → çerçevenin ÜSTÜNE değil kutunun İÇİNE yerleşir (Bootstrap'in yaklaşımı) */
 .adim-kutusu legend + * { clear: left; }
-.adim-kutusu legend { float: left; width: 100%; display: flex; align-items: center; gap: var(--b3); font-family: var(--yazi-baslik); font-size: 1.65rem; color: var(--metin); margin-bottom: var(--b4); padding: 0; }
+.adim-kutusu legend { float: left; width: 100%; display: flex; align-items: center; gap: var(--b3); font-family: var(--yazi-baslik); font-weight: 700; letter-spacing: -0.02em; font-size: 1.35rem; color: var(--metin); margin-bottom: var(--b4); padding: 0; }
 .adim-kutusu .adim-no { width: 1.9rem; height: 1.9rem; border-radius: 50%; display: grid; place-items: center; flex: none;
                         font-family: var(--yazi-veri); font-size: .85rem; font-weight: 600; color: var(--soluk);
                         border: 1.5px solid var(--cizgi-guclu); transition: background-color .3s ease, color .3s ease, border-color .3s ease; }
@@ -832,8 +834,8 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 
 /* 403 / 404 / 500 sayfaları */
 .durum-sayfasi { max-width: 32rem; margin: var(--b16) auto; text-align: center; }
-.durum-kodu { font-family: var(--yazi-baslik); font-size: clamp(5rem, 14vw, 9rem); line-height: .9; color: var(--mavi); margin-bottom: var(--b4); }
-.durum-sayfasi h1 { font-size: 2.4rem; color: var(--metin); margin-bottom: var(--b3); }
+.durum-kodu { font-family: var(--yazi-baslik); font-weight: 800; letter-spacing: -0.035em; font-size: clamp(4.5rem, 12vw, 7.5rem); line-height: .9; color: var(--mavi); margin-bottom: var(--b4); }
+.durum-sayfasi h1 { font-size: 2rem; color: var(--metin); margin-bottom: var(--b3); }
 .durum-sayfasi p { color: var(--soluk); margin-bottom: var(--b6); }
 
 /* Klinik çalışma saatleri formu: telefonda gün başlık, açılış/kapanış yan yana, kapalı kutusu altta */
@@ -897,7 +899,7 @@ a.saat-cipi:hover { transform: translateY(-1px); }
 
 /* d) Sayaç rakamları: her rakam 0–9 sütunu, hedef rakama kayar */
 .sayac-hazir { display: inline-flex; align-items: flex-end; }
-/* Satır yüksekliği 1.15em: serif rakamların üstü/altı kesilmesin. JS kaydırmayı aynı birimle yapar. */
+/* Satır yüksekliği 1.15em: büyük rakamların üstü/altı kesilmesin. JS kaydırmayı aynı birimle yapar. */
 .sayac-rakam { display: inline-block; height: 1.15em; overflow: hidden; line-height: 1.15; vertical-align: bottom; }
 .sayac-rakam > span { display: flex; flex-direction: column; transition: transform 1.6s var(--egri); }
 .sayac-rakam > span > span { height: 1.15em; line-height: 1.15; text-align: center; }

@@ -57,9 +57,8 @@
     @* JS çalışıyorsa <html>'e "js" sınıfı eklenir; animasyon başlangıç stilleri SADECE bu sınıf varken uygulanır.
        Böylece JS kapalıysa hiçbir içerik soluk/gizli kalmaz. *@
     <script>document.documentElement.classList.add('js');</script>
-    @* Yazı tipleri (steril tema): Instrument Serif başlıklar, Hanken Grotesk gövde. Dosyalar wwwroot/fonts içinde, internet gerekmez. *@
-    <link rel="preload" href="~/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="~/fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+    @* Yazı tipi (steril tema): Plus Jakarta Sans, başlık ve gövde aynı aile. Dosyalar wwwroot/fonts içinde, internet gerekmez. *@
+    <link rel="preload" href="~/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/yazi-tipleri.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />

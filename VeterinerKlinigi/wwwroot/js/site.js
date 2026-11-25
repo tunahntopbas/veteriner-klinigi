@@ -103,6 +103,7 @@ function parcala(el, harfHarf) {
     if (el.dataset.parcalandi) return;
     el.dataset.parcalandi = '1';
     el.setAttribute('aria-label', el.textContent.trim());
+    var asil = el.innerHTML;   // animasyon bitince geri konacak (aşağıya bakın)
     var sira = 0;
     (function gez(dugum) {
         Array.prototype.slice.call(dugum.childNodes).forEach(function (n) {
@@ -124,6 +125,13 @@ function parcala(el, harfHarf) {
     })(el);
     if (!harfHarf) el.style.setProperty('--adim', '70ms');
     el.classList.add('bolundu');
+    // Son parça netleşince başlık eski düz metnine döner. Harfler ayrı kutulardayken yazı tipinin
+    // harf çifti ayarı (kerning) çalışmaz; "r," gibi yerlerde boşluk açılıyordu. Düz metin = doğru aralık.
+    var parcalar = el.querySelectorAll('.parca');
+    var son = parcalar[parcalar.length - 1];
+    if (son) son.addEventListener('animationend', function () {
+        el.innerHTML = asil; el.classList.remove('bolundu'); el.removeAttribute('aria-label');
+    }, { once: true });
 }
 if (!hareketIstemiyor) {
     document.querySelectorAll('.ozet-selam .satir > span').forEach(function (el) { parcala(el, true); });
@@ -144,16 +152,27 @@ document.addEventListener('DOMContentLoaded', function () {
         el.setAttribute('aria-label', metin);
         el.textContent = '';
         el.classList.add('sayac-hazir');
+        var sonSutun = null;
         Array.from(metin).forEach(function (ch, i) {
             if (!/\d/.test(ch)) { var d = document.createElement('span'); d.setAttribute('aria-hidden', 'true'); d.textContent = ch === ' ' ? ' ' : ch; el.appendChild(d); return; }
             var kutu = document.createElement('span'); kutu.className = 'sayac-rakam'; kutu.setAttribute('aria-hidden', 'true');
             var sutun = document.createElement('span');
             for (var t = 0; t < 2; t++) for (var r = 0; r < 10; r++) { var s = document.createElement('span'); s.textContent = r; sutun.appendChild(s); }
             sutun.style.transitionDelay = (0.25 + sira * 0.08 + i * 0.06) + 's';
-            kutu.appendChild(sutun); el.appendChild(kutu);
+            // Kutu, hedef rakamın kendi genişliğinde olsun ("1" dar, "8" geniş); yoksa her rakam
+            // en geniş rakam kadar yer kaplar ve "1 8" gibi aralıklı görünür.
+            var olcu = document.createElement('span'); olcu.textContent = ch; el.appendChild(olcu);
+            kutu.style.width = olcu.getBoundingClientRect().width + 'px'; el.removeChild(olcu);
+            kutu.appendChild(sutun); el.appendChild(kutu); sonSutun = sutun;
             // iki kare bekle: tarayıcı önce 0 konumunu çizsin, sonra hedefe kaysın
             requestAnimationFrame(function () { requestAnimationFrame(function () { sutun.style.transform = 'translateY(-' + ((10 + +ch) * 1.15) + 'em)'; }); });
         });
+        // Son rakam yerine oturunca sayaç parçaları kaldırılır, düz metin geri gelir
+        // (kopyala-yapıştır ve ekran okuyucu için de daha temiz).
+        if (sonSutun) sonSutun.addEventListener('transitionend', function () {
+            if (!el.classList.contains('sayac-hazir')) return;
+            el.textContent = metin; el.classList.remove('sayac-hazir'); el.removeAttribute('aria-label');
+        }, { once: true });
     });
 });
 

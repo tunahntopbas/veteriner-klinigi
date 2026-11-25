@@ -43,10 +43,10 @@
   /* Görüntünün kare kenarları zemindeki renk lekeleriyle çakışmasın: kenarları yumuşakça sil */
   -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); }
 .giris-metinleri { display: grid; gap: var(--b6); width: 100%; }
-.giris-metni h1, .giris-metni h2 { font-size: clamp(2.4rem, 6vw, 4.8rem); letter-spacing: -0.02em; line-height: 1; color: var(--metin); margin-bottom: var(--b3); }
+.giris-metni h1, .giris-metni h2 { font-weight: 800; font-size: clamp(2.1rem, 5vw, 4rem); letter-spacing: -0.028em; line-height: 1.02; color: var(--metin); margin-bottom: var(--b3); }
 .giris-metni p { color: var(--soluk); font-size: 1.1rem; max-width: 42ch; margin: 0; }
 .son-kart { border-radius: var(--kose-buyuk); padding: var(--b8); width: 100%; }
-.son-kart h2 { font-size: clamp(2rem, 3.6vw, 2.8rem); color: var(--metin); margin-bottom: var(--b2); }
+.son-kart h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); color: var(--metin); margin-bottom: var(--b2); }
 .son-kart p { color: var(--soluk); margin-bottom: var(--b6); }
 
 
