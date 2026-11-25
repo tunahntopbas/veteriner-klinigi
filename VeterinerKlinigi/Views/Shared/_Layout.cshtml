@@ -132,12 +132,9 @@
                                     </li>
                                 }
                             }
-                            else
-                            {
-                                var girisAktif = AktifMi("", "Hesap", "Giris");
-                                <li class="nav-item"><a class="@Sinif(girisAktif)" aria-current="@Mevcut(girisAktif)" asp-area="" asp-controller="Hesap" asp-action="Giris">Giriş yap</a></li>
-                                <li class="nav-item ms-lg-2 mt-2 mt-lg-0"><a class="btn btn-koyu btn-sm" asp-area="" asp-controller="Hesap" asp-action="Kayit">Üye ol</a></li>
-                            }
+                            @* Giriş yapmamış kullanıcıya üst barda "Giriş yap / Üye ol" GÖSTERİLMEZ (25.11 kararı):
+                               giriş, "/" sahnesindeki "Kliniğe gir" ile ya da korumalı bir sayfaya (ör. Randevu al)
+                               tıklanınca açılan giriş sayfasından yapılır. Üye ol bağlantısı giriş sayfasında. *@
                         </ul>
                     </div>
                 </div>

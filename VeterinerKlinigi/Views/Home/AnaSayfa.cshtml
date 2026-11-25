@@ -4,7 +4,10 @@
     - "/" adresi artık 3D giriş sahnesi (Views/Home/Index.cshtml); bu sayfaya oradan "Kliniğe gir" ile gelinir.
     - ÖDEV 5.1 — Sağdaki "boş saatler" fişi sayfa açıldıktan sonra jQuery ile REST API'den doldurulur:
       GET /api/veterinerler/uygun?hizmetId=..&tarih=..  (MVC formu ve MCP aracıyla AYNI servis: MusaitlikServisi)
-    - Kaydırınca beliren bölümler: "belir" sınıfı + wwwroot/js/site.js (IntersectionObserver).
+    - 25.11 SADELEŞTİRME: sayfa göz yoruyordu. "Randevu nasıl işler" adımları, örnek asistan konuşması,
+      çalışma saatleri ve adres bölümleri kaldırıldı (saatler ve adres zaten alt bilgide). Kalan üç bölüm:
+      hero + canlı boş saatler, hizmetler, hekimler; en altta tek satırlık asistan şeridi.
+      Açıklama paragrafları kısaldı, hizmetler tek satıra indi, kaydırma animasyonu bu sayfadan çıkarıldı.
 *@
 @model AnaSayfaVM
 @{
@@ -45,10 +48,7 @@
         <div class="row g-4 g-lg-5 align-items-center">
             <div class="col-lg-6">
                 <h1 id="heroBaslik" class="hero-baslik">Boş saati görün, randevunuzu hemen alın.</h1>
-                <p class="hero-metin">
-                    Hekimlerimizin müsait saatleri yanda canlı olarak listelenir. Üye olup hayvanınızı kaydettikten sonra
-                    randevu alabilir, aşı geçmişini ve sıradaki dozun tarihini tek sayfada görebilirsiniz.
-                </p>
+                <p class="hero-metin">Hekimlerimizin bugünkü müsait saatleri yanda. Bir saat seçin, gerisini randevu formu halleder.</p>
                 <div class="d-flex flex-wrap gap-2">
                     @if (hekimMi)
                     {
@@ -62,9 +62,8 @@
                     {
                         <a class="btn btn-primary btn-lg" asp-controller="Randevu" asp-action="Olustur">Randevu al</a>
                     }
-                    <a class="btn btn-outline-primary btn-lg" href="#hizmetler">Hizmetler ve ücretler</a>
+                    <a class="btn btn-koyu btn-lg" href="#hizmetler">Hizmetler ve ücretler</a>
                 </div>
-                <p class="hero-adres"><strong>@klinik.Ad</strong><br />@klinik.Adres · <span class="veri">@klinik.Telefon</span></p>
             </div>
 
             <div class="col-lg-5 offset-lg-1">
@@ -100,7 +99,7 @@
                     @if (muayene is not null)
                     {
                         <footer class="randevu-fisi-alt">
-                            @muayene.Ad · <span class="veri">@muayene.SureDakika dk</span> · <span class="veri">@muayene.Ucret.ToString("N0") TL</span>. Diğer hizmetler için saatler randevu formunda.
+                            @muayene.Ad için, <span class="veri">@muayene.SureDakika</span> dakika. Diğer hizmetlerin saatleri randevu formunda.
                         </footer>
                     }
                 </article>
@@ -109,24 +108,21 @@
     </div>
 </section>
 
-@* ============================ HİZMETLER ============================ *@
+@* ============================ HİZMETLER ============================
+   Fiyat listesi gibi: her hizmet TEK satır (ad, süre, ücret). Açıklamalar kaldırıldı; detay Hizmetler sayfasında. *@
 <section class="bolum" id="hizmetler" aria-labelledby="hizmetlerBaslik">
-    <div class="container belir">
-        <h2 id="hizmetlerBaslik" class="bolum-baslik">Hizmetler ve ücretler</h2>
-        <p class="bolum-giris">Süreler randevu planlamasında kullanılır: seçtiğiniz hizmet ne kadar sürüyorsa hekimin takviminde o kadar yer ayrılır.</p>
+    <div class="container">
+        <div class="bolum-ust">
+            <h2 id="hizmetlerBaslik" class="bolum-baslik">Hizmetler ve ücretler</h2>
+            <a class="bolum-baglanti" asp-controller="Home" asp-action="Hizmetler">Açıklamalarıyla görün</a>
+        </div>
         <ul class="hizmet-listesi">
             @foreach (var h in Model.Hizmetler)
             {
                 <li>
                     <span class="hizmet-ad">@h.Ad</span>
-                    <span class="hizmet-olcu">
-                        <span class="ucret veri">@h.Ucret.ToString("N0") TL</span>
-                        <span class="sure veri">@h.SureDakika dk</span>
-                    </span>
-                    @if (!string.IsNullOrWhiteSpace(h.Aciklama))
-                    {
-                        <span class="hizmet-aciklama">@h.Aciklama</span>
-                    }
+                    <span class="sure">@h.SureDakika dk</span>
+                    <span class="ucret veri">@h.Ucret.ToString("N0") TL</span>
                 </li>
             }
         </ul>
@@ -135,128 +131,33 @@
 
 @* ============================ HEKİMLER ============================ *@
 <section class="bolum" aria-labelledby="hekimlerBaslik">
-    <div class="container belir">
+    <div class="container">
         <h2 id="hekimlerBaslik" class="bolum-baslik">Hekimlerimiz</h2>
-        <p class="bolum-giris">Her hekim yalnızca uzman olduğu hizmetleri verir. Randevu alırken seçtiğiniz hizmeti veren hekimler listelenir.</p>
         <div class="hekim-listesi">
             @foreach (var v in Model.Hekimler)
             {
                 <article class="hekim">
                     <div class="hekim-bas" aria-hidden="true">@BasHarfler(v.AdSoyad)</div>
-                    <h3>@v.AdSoyad</h3>
-                    <p class="unvan">@v.Unvan</p>
-                    <ul class="etiketler" aria-label="Uzmanlık alanları">
-                        @foreach (var u in v.Uzmanliklar.OrderBy(u => u.Ad))
-                        {
-                            <li>@u.Ad</li>
-                        }
-                    </ul>
+                    <div>
+                        <h3>@v.AdSoyad</h3>
+                        <p class="unvan">@v.Unvan, @string.Join(", ", v.Uzmanliklar.OrderBy(u => u.Ad).Select(u => u.Ad))</p>
+                    </div>
                 </article>
             }
         </div>
     </div>
 </section>
 
-@* ============================ RANDEVU NASIL İŞLER ============================
-   Gerçek bir sıra olduğu için numaralı adımlar. Sayfanın TEK orkestre animasyonu burada:
-   bölüm görününce adımlar sırayla gelir, aralarındaki safran çizgi dolar. *@
-<section class="bolum" aria-labelledby="adimlarBaslik">
-    <div class="container">
-        <h2 id="adimlarBaslik" class="bolum-baslik">Randevu nasıl işler?</h2>
-        <p class="bolum-giris">Sistem, hekimin müsaitliğini ve diğer randevularını hizmet süresiyle birlikte kontrol eder; uygun olmayan saat zaten listede çıkmaz.</p>
-        <ol class="adimlar">
-            <li class="adim-cizgi" aria-hidden="true"></li>
-            <li class="adim">
-                <div class="adim-no" aria-hidden="true">1</div>
-                <h3>Hayvanınızı kaydedin</h3>
-                <p>Tür, ırk, doğum tarihi ve kilo. İsterseniz bir fotoğraf da ekleyin.</p>
-            </li>
-            <li class="adim">
-                <div class="adim-no" aria-hidden="true">2</div>
-                <h3>Hizmeti ve günü seçin</h3>
-                <p>Süre ve ücret seçim sırasında görünür.</p>
-            </li>
-            <li class="adim">
-                <div class="adim-no" aria-hidden="true">3</div>
-                <h3>Boş bir saate dokunun</h3>
-                <p>Yalnızca hekimin müsait ve boş olduğu başlangıç saatleri listelenir.</p>
-            </li>
-            <li class="adim">
-                <div class="adim-no" aria-hidden="true">4</div>
-                <h3>Onayı bekleyin</h3>
-                <p>Hekim ya da klinik onayladığında randevunuz kesinleşir.</p>
-                <span class="durum durum-bekliyor">Bekliyor</span>
-            </li>
-        </ol>
-    </div>
-</section>
-
-@* ============================ YAPAY ZEKÂ ASİSTANI (MCP) ============================ *@
+@* ============================ YAPAY ZEKÂ ASİSTANI (MCP) ============================
+   Tek satırlık şerit: ne olduğu + nereden bağlanacağı. Ayrıntı README §7 ve Profil sayfasında. *@
 <section class="bolum" aria-labelledby="asistanBaslik">
-    <div class="container asistan belir">
-        <div>
-            <h2 id="asistanBaslik" class="bolum-baslik">Yapay zekâ asistanınıza sorun</h2>
-            <p class="okuma">
-                Klinik, bir <strong>MCP sunucusu</strong> içerir. MCP, Claude Desktop veya VS Code gibi bir yapay zekâ
-                asistanının bu uygulamadaki işlemleri sizin adınıza çağırmasını sağlar. Asistan yalnızca sizin hayvanlarınızı
-                ve randevularınızı görür.
-            </p>
-            <p class="okuma text-secondary">Bağlamak için Profil sayfanızdan bir erişim anahtarı oluşturun ve asistanınızın MCP ayarına ekleyin.</p>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a class="btn btn-koyu" asp-controller="Profil" asp-action="Index">Erişim anahtarı oluştur</a>
-            }
-            else
-            {
-                <a class="btn btn-koyu" asp-controller="Hesap" asp-action="Kayit">Üye olun ve bağlayın</a>
-            }
-        </div>
-        <figure class="konusma mb-0" aria-label="Örnek asistan konuşması">
-            <figcaption class="konusma-not">Örnek konuşma</figcaption>
-            <p class="balon balon-kullanici mb-0">Pamuk'un bir sonraki aşısı ne zaman?</p>
-            <p class="arac-cagri mb-0">araç: <b>asi_takvimi</b>(hayvanAdi: "Pamuk")</p>
-            <p class="balon balon-asistan mb-0">Pamuk'un sıradaki aşısı İç Parazit, 7 Aralık 2026'da. 17 gün kaldı. O hafta için muayene randevusu da alabilirim.</p>
-            <p class="balon balon-kullanici mb-0">Olur, 7 Aralık sabah 10'da Elif Hanım'a.</p>
-            <p class="arac-cagri mb-0">araç: <b>randevu_olustur</b>(hayvanAdi: "Pamuk", hizmetId: 1, veterinerId: 1, tarih: "2026-12-07", saat: "10:00")</p>
-            <p class="balon balon-asistan mb-0">Randevu oluşturuldu: 7 Aralık 10:00–10:30, Elif Kaya, Genel Muayene. Durumu "Bekliyor"; klinik onaylayınca kesinleşecek.</p>
-        </figure>
-    </div>
-</section>
-
-@* ============================ KLİNİK BİLGİSİ ============================ *@
-<section class="bolum" aria-labelledby="klinikBaslik">
-    <div class="container belir">
-        <div class="row g-4 g-lg-5">
-            <div class="col-md-6">
-                <h2 id="klinikBaslik" class="bolum-baslik">Çalışma saatleri</h2>
-                <table class="saat-tablosu">
-                    <caption class="visually-hidden">Haftalık çalışma saatleri</caption>
-                    <tbody>
-                        @foreach (var gun in GunAdlari.HaftaSirasi)
-                        {
-                            var c = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun);
-                            <tr class="@(gun == simdi.DayOfWeek ? "bugun" : null)">
-                                <th scope="row">@GunAdlari.Ad(gun)</th>
-                                @if (c is null || c.Kapali)
-                                {
-                                    <td class="kapali">Kapalı</td>
-                                }
-                                else
-                                {
-                                    <td class="veri">@c.AcilisSaati.ToString("HH:mm")–@c.KapanisSaati.ToString("HH:mm")</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+    <div class="container">
+        <div class="asistan-serit">
+            <div>
+                <h2 id="asistanBaslik">Aşı takvimini yapay zekâ asistanınıza sorun</h2>
+                <p>Claude Desktop gibi bir asistan, MCP ile yalnızca sizin hayvanlarınızı ve randevularınızı görür.</p>
             </div>
-            <div class="col-md-6">
-                <h2 class="bolum-baslik">Adres</h2>
-                <p class="mb-1 fs-5">@klinik.Ad</p>
-                <p class="mb-1">@klinik.Adres</p>
-                <p class="veri">@klinik.Telefon</p>
-                <p class="text-secondary okuma mt-4">Acil durumlarda randevu beklemeden kliniği arayın. Çevrimiçi randevular hekim ya da klinik onayladığında kesinleşir.</p>
-            </div>
+            <a class="btn btn-koyu" asp-controller="Profil" asp-action="Index">Erişim anahtarı oluştur</a>
         </div>
     </div>
 </section>

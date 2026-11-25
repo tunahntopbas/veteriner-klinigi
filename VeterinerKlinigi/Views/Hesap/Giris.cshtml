@@ -1,40 +1,42 @@
+@*
+    Giriş sayfası. "/" sahnesindeki "Kliniğe gir" buraya getirir; üst barda giriş bağlantısı yok (25.11).
+    Girişten sonra: üye → ana sayfa, hekim → hekim paneli, admin → yönetim paneli
+    (korumalı bir sayfadan gelindiyse DonusAdresi'ne). Görünüm: site.css §9 → .hesap-kutusu
+*@
 @model GirisVM
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card kart-golge">
-            <div class="card-body p-4">
-                <h1 class="h3 mb-3">Giriş Yap</h1>
+<div class="hesap-kutusu">
+    <div class="panel">
+        <h1>Giriş yap</h1>
+        <p class="sayfa-alt mb-4">Randevularınız ve hayvanlarınızın aşı takvimi için hesabınıza girin.</p>
 
-                <form asp-action="Giris" method="post">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <form asp-action="Giris" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                    @* Korumalı sayfadan gelindiyse, girişten sonra oraya dönmek için gizli alan *@
-                    <input asp-for="DonusAdresi" type="hidden" />
+            @* Korumalı sayfadan gelindiyse, girişten sonra oraya dönmek için gizli alan *@
+            <input asp-for="DonusAdresi" type="hidden" />
 
-                    <div class="mb-3">
-                        <label asp-for="Eposta" class="form-label"></label>
-                        <input asp-for="Eposta" class="form-control" autocomplete="username" />
-                        <span asp-validation-for="Eposta" class="text-danger small"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Sifre" class="form-label"></label>
-                        <input asp-for="Sifre" class="form-control" autocomplete="current-password" />
-                        <span asp-validation-for="Sifre" class="text-danger small"></span>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input asp-for="BeniHatirla" class="form-check-input" />
-                        <label asp-for="BeniHatirla" class="form-check-label"></label>
-                    </div>
+            <div class="mb-3">
+                <label asp-for="Eposta" class="form-label"></label>
+                <input asp-for="Eposta" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Eposta" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Sifre" class="form-label"></label>
+                <input asp-for="Sifre" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Sifre" class="text-danger small"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="BeniHatirla" class="form-check-input" />
+                <label asp-for="BeniHatirla" class="form-check-label"></label>
+            </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Giriş</button>
-                </form>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Giriş yap</button>
+        </form>
 
-                <p class="mt-3 mb-0 text-center">
+                <p class="hesap-alt">
                     Hesabınız yok mu? <a asp-action="Kayit">Üye olun</a>
                 </p>
-            </div>
-        </div>
     </div>
 </div>
 

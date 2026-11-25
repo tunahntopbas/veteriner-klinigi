@@ -141,7 +141,8 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
 | 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
 | 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | `c9ee040` |
-| 19 | 25.11: **Üye ekranları.** Hayvan kartı yenilendi: fotoğraf yoksa adın baş harfi, yaş (1 yaşından küçükse ay), kilo, "sıradaki aşı" satırı (30 gün kala safran). Hayvan detayında kimlik şeridi; aşı takvimi API'den gelen yapılan ve planlı dozları tek zaman çizelgesinde, araya "Bugün" çizgisi koyarak gösterir. Aşı kayıtları tablosu dar ekranda alt alta satırlara dönüşür. Kilo Türkçe ondalıkla (4,2 kg). Liste sorgusu aşı kayıtlarını da yükler | `Views/Shared/_HayvanKarti.cshtml`, `Views/EvcilHayvan/Index.cshtml`, `Views/EvcilHayvan/Detay.cshtml`, `Services/EvcilHayvanServisi.cs` (`ListeleAsync` → `Include(AsiKayitlari)`), `wwwroot/css/site.css` (§9 İç sayfalar) | (bu günün commit'i) |
+| 20 | 25.11: **Giriş akışı ve sade ana sayfa** (kullanıcı isteği). Giriş sahnesindeki "Atla" kaldırıldı. "Kliniğe gir" artık giriş sayfasını açıyor (giriş yapmışsa doğrudan ana sayfa); üye girişten sonra ana sayfaya, hekim ve admin kendi paneline gider. Üst bardaki "Giriş yap / Üye ol" kaldırıldı, üye ol bağlantısı giriş sayfasında; çıkıştan sonra giriş sayfası açılır. Ana sayfa göz yoruyordu: "Randevu nasıl işler" adımları, örnek asistan konuşması, çalışma saatleri ve adres bölümleri çıkarıldı (saatler ve adres alt bilgide zaten var), hizmetler tek satıra indi, açıklama paragrafları kısaldı, kaydırma animasyonu kaldırıldı. Giriş ve kayıt sayfaları yeni görünüme geçti | `Views/Home/Index.cshtml`, `Views/Home/AnaSayfa.cshtml`, `Views/Shared/_Layout.cshtml`, `Views/Hesap/Giris.cshtml`, `Views/Hesap/Kayit.cshtml`, `Controllers/HesapController.cs`, `wwwroot/css/site.css`, `wwwroot/css/giris-sahnesi.css`, `wwwroot/js/site.js` | (bu günün ikinci commit'i) |
+| 19 | 25.11: **Üye ekranları.** Hayvan kartı yenilendi: fotoğraf yoksa adın baş harfi, yaş (1 yaşından küçükse ay), kilo, "sıradaki aşı" satırı (30 gün kala safran). Hayvan detayında kimlik şeridi; aşı takvimi API'den gelen yapılan ve planlı dozları tek zaman çizelgesinde, araya "Bugün" çizgisi koyarak gösterir. Aşı kayıtları tablosu dar ekranda alt alta satırlara dönüşür. Kilo Türkçe ondalıkla (4,2 kg). Liste sorgusu aşı kayıtlarını da yükler | `Views/Shared/_HayvanKarti.cshtml`, `Views/EvcilHayvan/Index.cshtml`, `Views/EvcilHayvan/Detay.cshtml`, `Services/EvcilHayvanServisi.cs` (`ListeleAsync` → `Include(AsiKayitlari)`), `wwwroot/css/site.css` (§9 İç sayfalar) | `ca01a93` |
 | 18 | 20.11: **3D giriş sahnesi + koyu cam tema.** "/" adresinde Three.js ile dönen Shiba Inu modeli, kaydırmayla yaklaşan cam randevu fişleri, 3 aşamalı anlatım ve "Kliniğe gir" kartı; WebGL yoksa veya "hareketi azalt" açıksa durağan görünüm. Tüm site koyu tema, seçici cam efekti. Ana sayfa `Home/AnaSayfa`'ya taşındı | `Views/Home/Index.cshtml`, `Views/Shared/_GirisLayout.cshtml`, `wwwroot/js/giris-sahnesi.js`, `wwwroot/css/giris-sahnesi.css`, `wwwroot/lib/three/`, `wwwroot/models/`, `wwwroot/images/`, `wwwroot/css/site.css` | `966f14c`, `b30465a`, `216c77c` |
 | 17 | 20.11: **Arayüz 1. gün.** Tasarım dili (renk ve yazı token'ları, Bootstrap teması), yeni üst bar (aktif sayfa çizgisi, mobilde sağdan açılan menü), veritabanından çalışma saatleri gösteren alt bilgi, yeni ana sayfa (canlı boş saatler fişi, hizmet/ücret listesi, hekimler, randevu adımları, asistan örneği, çalışma saatleri), kütüphanesiz kaydırma animasyonu | `wwwroot/css/site.css`, `wwwroot/js/site.js`, `wwwroot/fonts/`, `Views/Shared/_Layout.cshtml`, `Views/Home/Index.cshtml`, `ViewModels/AnaSayfaVM.cs`, `HomeController.Index` | `2453ee1`, `93d4770`, `f7a02a2` |
 
@@ -171,6 +172,7 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 - *Üst bardaki cam:* bulanıklık üst barın kendisine değil `::before` katmanına verildi (yukarıdaki offcanvas hatası tekrar olmasın).
 - *Rotalar:* `/` artık giriş sahnesi (`HomeController.Index`, ayrı `_GirisLayout`), eski ana sayfa `Home/AnaSayfa`. Logo, giriş/çıkış
   sonrası yönlendirmeler ve hata sayfalarındaki "Ana sayfaya dön" bağlantıları `AnaSayfa`'ya gider.
+  (25.11 güncellemesi: "Kliniğe gir" → giriş sayfası → ana sayfa; çıkıştan sonra giriş sayfası. Adım günlüğü satır 20.)
 - *3D için kütüphane:* Three.js r170, `wwwroot/lib/three` (MIT). Model: Quaternius "Shiba Inu", CC0, `wwwroot/models/shiba-inu.glb`
   (0,85 MB, 1812 üçgen, Idle/Walk gibi animasyonlarla). Kaydırma için ek kütüphane yok (GSAP kullanılmadı).
 - *Hata düzeltmesi:* .NET'in importmap Tag Helper'ı elle yazdığımız `<script type="importmap">`'in `type` özniteliğini siliyordu;
@@ -283,8 +285,9 @@ da saat dilimsiz (`timestamp without time zone`). Uygulama UTC'de çalışan bir
 **S: Animasyonları nasıl yaptın? Kütüphane kullandın mı?**
 İki ayrı yer var. Giriş sahnesi (`/`) Three.js kullanır (aşağıdaki soru). Ana sayfadaki animasyonlarda kütüphane yok. `wwwroot/js/site.js` içinde tarayıcının kendi `IntersectionObserver` API'si var: `belir` sınıflı bölümler ekrana
 girince tarayıcı bir kez haber verir, biz de `gorundu` sınıfını ekleriz. Hareketin kendisi CSS'te (`transition`), `site.css` 8. bölüm.
-Kaydırma olayını her pikselde dinlemediğimiz için sayfa yorulmaz. Tek "orkestre" an "Randevu nasıl işler" bölümü: adımlar sırayla
-gelir, aradaki çizgi dolar (`transition-delay`). Güvenlik ağları:
+Kaydırma olayını her pikselde dinlemediğimiz için sayfa yorulmaz. 25.11'de ana sayfa sadeleşince kaydırma animasyonu oradan
+kaldırıldı; ana sayfada tek hareket, açılışta canlı boş saatler fişinin yerine oturması. `belir` altyapısı iç sayfalar için duruyor.
+Güvenlik ağları:
 1. Başlangıç stili yalnızca `<html class="js">` varken uygulanır; JavaScript kapalıysa hiçbir içerik soluk kalmaz.
 2. Başlangıç tamamen görünmez değil (`opacity: .35`); animasyon çalışmasa da metin okunur.
 3. İşletim sisteminde "hareketi azalt" açıksa (`prefers-reduced-motion`) tüm animasyonlar kapanır.
@@ -307,7 +310,12 @@ gelir, aradaki çizgi dolar (`transition-delay`). Güvenlik ağları:
   (`IntersectionObserver`) çizim durur; sayfadan çıkarken GPU kaynakları `dispose` edilir. Mobilde fiş sayısı 8'den 4'e iner.
 - *Yedek:* Tarayıcı WebGL çizemiyorsa veya "hareketi azalt" açıksa 3D hiç başlamaz; modelden önceden alınmış bir görüntü, üç cümle ve
   "Kliniğe gir" kartı normal sayfa gibi alt alta görünür. Model yüklenemezse ya da JS hata verirse de aynı görünüme düşer.
-  "Atla" ve "Kliniğe gir" sıradan bağlantılar olduğu için her durumda çalışır.
+  "Kliniğe gir" sıradan bir bağlantı olduğu için her durumda çalışır.
+
+**S: Üst barda giriş bağlantısı yok; ziyaretçi nasıl giriş yapıyor?**
+Üç yol var: `/` sahnesinin sonundaki "Kliniğe gir", ana sayfadaki "Randevu al" ve korumalı herhangi bir sayfa. Korumalı sayfalarda
+`[Authorize]` giriş yapılmamışsa kullanıcıyı `/Hesap/Giris?DonusAdresi=...` adresine yollar, girişten sonra o sayfaya döner
+(`Url.IsLocalUrl` ile yalnızca site içi adres kabul edilir, open redirect yok). Üye ol bağlantısı giriş sayfasında.
 
 **S: Hayvan detayındaki aşı zaman çizelgesi nasıl oluşuyor?**
 Sayfa açılınca jQuery `GET /api/evcil-hayvanlar/{id}/asilar` çağırır. API iki liste döner: `gecmis` (yapılan dozlar)

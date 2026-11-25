@@ -11,15 +11,13 @@
 
 .giris-sayfasi { min-height: 100vh; }
 
-/* Üst şerit: marka + Atla. Her iki hâlde de görünür. */
+/* Üst şerit: yalnızca marka. Her iki hâlde de görünür. ("Atla" 25.11'de kaldırıldı; tek çıkış "Kliniğe gir".) */
 .giris-ust {
   position: fixed; top: 0; left: 0; right: 0; z-index: 20;
   display: flex; justify-content: space-between; align-items: center;
   padding: var(--b4) max(var(--b6), 4vw);
 }
 .giris-ust .marka-ad { font-size: 1.5rem; }
-.giris-atla { color: var(--metin); text-decoration: none; font-weight: 600; padding: var(--b2) var(--b4); border-radius: var(--kose-orta); border: 1px solid var(--cam-cizgi); background: var(--cam-zemin); -webkit-backdrop-filter: var(--cam-bulanik); backdrop-filter: var(--cam-bulanik); }
-.giris-atla:hover { color: #fff; border-color: var(--cizgi-guclu); }
 
 /* Cam yüzey tarifi (fişler + son kart). Bulanıklık desteklenmezse düz yarı opak yüzey. */
 .cam-fis, .son-kart {

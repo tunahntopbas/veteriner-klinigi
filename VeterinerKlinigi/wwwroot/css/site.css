@@ -323,17 +323,19 @@ table.kart-golge { border-collapse: separate; border-spacing: 0; overflow: hidde
 /* ------------------------------------------------------------------
    7) ANA SAYFA (Home/AnaSayfa)
    ------------------------------------------------------------------ */
-.bolum { padding-block: var(--b16); }
-.bolum + .bolum { border-top: 1px solid var(--cizgi); }
-.bolum-baslik { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: var(--b3); }
-.bolum-giris { color: var(--soluk); font-size: 1.05rem; max-width: 60ch; margin-bottom: var(--b8); }
+/* 25.11: sayfa sadeleştirildi (Views/Home/AnaSayfa.cshtml başındaki not). Bölümler arasında çizgi yok,
+   yalnızca boşluk; açıklama paragrafları kaldırıldı. */
+.bolum { padding-block: var(--b12); }
+.bolum-ust { display: flex; justify-content: space-between; align-items: baseline; gap: var(--b4); flex-wrap: wrap; margin-bottom: var(--b6); }
+.bolum-ust .bolum-baslik { margin: 0; }
+.bolum-baslik { font-size: clamp(1.5rem, 2.6vw, 1.9rem); margin-bottom: var(--b6); }
+.bolum-baglanti { color: var(--soluk); font-size: .95rem; }
+.bolum-baglanti:hover { color: var(--metin); }
 
 /* ---- Hero: içerik kadar yüksek, 100vh değil ---- */
-.hero { padding-block: var(--b12) var(--b16); }
+.hero { padding-block: var(--b16); }
 .hero-baslik { font-size: clamp(2.3rem, 5.2vw, 4rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; max-width: 14ch; color: #fff; }
-.hero-metin { font-size: 1.15rem; color: var(--soluk); max-width: 46ch; margin-block: var(--b6) var(--b8); }
-.hero-adres { margin-top: var(--b6); color: var(--soluk); font-size: .95rem; }
-.hero-adres strong { color: var(--metin); font-weight: 600; }
+.hero-metin { font-size: 1.15rem; color: var(--soluk); max-width: 40ch; margin-block: var(--b6) var(--b8); }
 
 /* ---- Hero sağı: canlı boş saatler "randevu fişi" — CAM ---- */
 .randevu-fisi {
@@ -369,70 +371,27 @@ a.saat-cipi:hover { border-color: var(--safran); background: rgba(240, 178, 74, 
 .iskelet { height: 1rem; border-radius: 4px; background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.12), rgba(255,255,255,.05)); background-size: 200% 100%; animation: iskelet 1.2s linear infinite; }
 @keyframes iskelet { to { background-position: -200% 0; } }
 
-/* ---- Hizmetler: fiyat listesi gibi (kartsız, satırlar) ---- */
+/* ---- Hizmetler: fiyat listesi gibi, her hizmet TEK satır: ad ... süre  ücret ---- */
 .hizmet-listesi { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--b12); }
-.hizmet-listesi li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--b1) var(--b4); padding-block: var(--b4); border-bottom: 1px solid var(--cizgi); }
-.hizmet-ad { font-weight: 600; color: #fff; }
-.hizmet-aciklama { grid-column: 1; color: var(--soluk); font-size: .9rem; }
-.hizmet-olcu { grid-column: 2; grid-row: 1 / span 2; text-align: right; white-space: nowrap; }
-.hizmet-olcu .ucret { display: block; font-weight: 600; font-size: 1rem; color: var(--safran); }
-.hizmet-olcu .sure { color: var(--soluk); font-size: .85rem; }
-@media (max-width: 767.98px) { .hizmet-listesi { grid-template-columns: minmax(0, 1fr); } }
+.hizmet-listesi li { display: grid; grid-template-columns: minmax(0, 1fr) auto 6.5rem; gap: var(--b4); align-items: baseline; padding-block: var(--b3); border-bottom: 1px solid var(--cizgi); }
+.hizmet-ad { color: var(--metin); }
+.hizmet-listesi .sure { color: var(--soluk); font-size: .9rem; }
+.hizmet-listesi .ucret { text-align: right; font-weight: 600; color: var(--metin); }
+@media (max-width: 767.98px) { .hizmet-listesi { grid-template-columns: minmax(0, 1fr); } .hizmet-listesi li { grid-template-columns: minmax(0, 1fr) auto 5.5rem; } }
 
-/* ---- Hekimler: yan yana sade sütunlar ---- */
-.hekim-listesi { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--b8); }
-.hekim { border-top: 2px solid var(--cizgi-guclu); padding-top: var(--b4); }
-.hekim-bas { width: 3rem; height: 3rem; border-radius: 50%; background: var(--adacayi-zemin); color: #CFE8DD; border: 1px solid rgba(111, 165, 146, .35);
-             display: grid; place-items: center; font-family: var(--yazi-baslik); font-weight: 700; margin-bottom: var(--b3); }
-.hekim h3 { font-size: 1.2rem; margin-bottom: var(--b1); }
-.hekim .unvan { color: var(--soluk); font-size: .9rem; margin-bottom: var(--b3); }
-.etiketler { display: flex; flex-wrap: wrap; gap: var(--b2); list-style: none; padding: 0; margin: 0; }
-.etiketler li { font-size: .82rem; padding: .2rem .55rem; border-radius: 999px; background: var(--adacayi-zemin); color: #BFE0D3; }
+/* ---- Hekimler: baş harf + ad + unvan ve uzmanlıklar tek satırda ---- */
+.hekim-listesi { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--b6) var(--b8); }
+.hekim { display: flex; gap: var(--b4); align-items: center; }
+.hekim-bas { flex: none; width: 3rem; height: 3rem; border-radius: 50%; background: var(--adacayi-zemin); color: #CFE8DD;
+             display: grid; place-items: center; font-family: var(--yazi-baslik); font-weight: 700; }
+.hekim h3 { font-size: 1.05rem; margin: 0 0 2px; }
+.hekim .unvan { color: var(--soluk); font-size: .9rem; margin: 0; }
 
-/* ---- Randevu nasıl işler: gerçek bir sıra → numaralı adımlar + dolan çizgi ---- */
-.adimlar { list-style: none; padding: 0; margin: 0; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--b6); }
-.adimlar::before, .adim-cizgi { /* adımları bağlayan çizgi: soluk zemin + üstünde dolan safran */
-  content: ""; position: absolute; top: 1.25rem; height: 2px; background: var(--cizgi-guclu);
-  /* İlk dairenin ortasından son dairenin ortasına: son sütunun genişliği kadar sağdan boşluk bırakılır */
-  left: 1.25rem; right: calc((100% - 3 * var(--b6)) / 4 + var(--b6) - 1.25rem);
-}
-.adim-cizgi { background: var(--safran); transform-origin: left center; transform: scaleX(1); }
-.adim { position: relative; }
-.adim-no {
-  position: relative; z-index: 1; width: 2.5rem; height: 2.5rem; border-radius: 50%;
-  display: grid; place-items: center; background: var(--yuzey-2); color: #fff; border: 1px solid var(--cizgi-guclu);
-  font-family: var(--yazi-veri); font-weight: 600; margin-bottom: var(--b4);
-  box-shadow: 0 0 0 6px var(--zemin);
-}
-.adim h3 { font-size: 1.1rem; margin-bottom: var(--b2); }
-.adim p { color: var(--soluk); font-size: .95rem; margin: 0; }
-.adim .durum { margin-top: var(--b2); }
-@media (max-width: 767.98px) {
-  .adimlar { grid-template-columns: minmax(0, 1fr); gap: var(--b6); padding-left: 3.5rem; }
-  .adimlar::before, .adim-cizgi { top: 1.25rem; bottom: 1.25rem; left: 1.2rem; right: auto; width: 2px; height: auto; }
-  .adim-cizgi { transform-origin: center top; }
-  .adim-no { position: absolute; left: -3.5rem; top: 0; margin: 0; }
-}
-
-/* ---- Yapay zekâ asistanı: örnek konuşma ---- */
-.asistan { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--b12); align-items: center; }
-.konusma { background: var(--yuzey); border: 1px solid var(--cizgi); color: var(--metin); border-radius: var(--kose-buyuk); padding: var(--b6); display: flex; flex-direction: column; gap: var(--b3); }
-.konusma-not { font-size: .8rem; color: var(--soluk); }
-.balon { max-width: 85%; padding: var(--b3) var(--b4); border-radius: 14px; line-height: 1.45; }
-.balon-kullanici { align-self: flex-end; background: var(--safran); color: var(--safran-ustu); border-bottom-right-radius: 4px; font-weight: 500; }
-.balon-asistan { align-self: flex-start; background: var(--yuzey-2); border-bottom-left-radius: 4px; }
-.arac-cagri { align-self: flex-start; font-family: var(--yazi-veri); font-size: .8rem; color: var(--soluk); padding-left: var(--b1); }
-.arac-cagri b { color: #CFE3DA; font-weight: 500; }
-@media (max-width: 991.98px) { .asistan { grid-template-columns: minmax(0, 1fr); gap: var(--b8); } }
-
-/* ---- Klinik bilgisi: çalışma saatleri tablosu, bugün vurgulu ---- */
-.saat-tablosu { width: 100%; max-width: 26rem; border-collapse: collapse; }
-.saat-tablosu th, .saat-tablosu td { padding: var(--b2) 0; border-bottom: 1px solid var(--cizgi); }
-.saat-tablosu th { font-weight: 500; }
-.saat-tablosu td { text-align: right; }
-.saat-tablosu tr.bugun th, .saat-tablosu tr.bugun td { font-weight: 700; color: #fff; }
-.saat-tablosu tr.bugun th::after { content: "bugün"; margin-left: var(--b2); font-size: .72rem; font-weight: 600; padding: .1rem .4rem; border-radius: 4px; background: var(--safran); color: var(--safran-ustu); vertical-align: middle; }
-.kapali { color: var(--soluk); }
+/* ---- Yapay zekâ asistanı: tek şerit ---- */
+.asistan-serit { display: flex; justify-content: space-between; align-items: center; gap: var(--b6); flex-wrap: wrap;
+                 padding: var(--b6) var(--b8); border-radius: var(--kose-buyuk); background: var(--yuzey); border: 1px solid var(--cizgi); }
+.asistan-serit h2 { font-size: 1.15rem; margin: 0 0 var(--b1); color: #fff; }
+.asistan-serit p { color: var(--soluk); margin: 0; }
 
 
 /* ------------------------------------------------------------------
@@ -445,21 +404,7 @@ a.saat-cipi:hover { border-color: var(--safran); background: rgba(240, 178, 74, 
   .js .belir { opacity: .35; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
   .js .belir.gorundu { opacity: 1; transform: none; }
 
-  /* Tek orkestre an: adımlar sırayla gelir, çizgi soldan sağa dolar */
-  .js .adimlar .adim-cizgi { transform: scaleX(0); transition: transform 1.4s cubic-bezier(.4, 0, .2, 1) .15s; }
-  .js .adimlar.gorundu .adim-cizgi { transform: scaleX(1); }
-  .js .adimlar .adim { opacity: .35; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
-  .js .adimlar.gorundu .adim { opacity: 1; transform: none; }
-  .js .adimlar.gorundu .adim:nth-child(2) { transition-delay: .1s; }   /* 1. çocuk = çizgi */
-  .js .adimlar.gorundu .adim:nth-child(3) { transition-delay: .45s; }
-  .js .adimlar.gorundu .adim:nth-child(4) { transition-delay: .8s; }
-  .js .adimlar.gorundu .adim:nth-child(5) { transition-delay: 1.15s; }
-  @media (max-width: 767.98px) {
-    .js .adimlar .adim-cizgi { transform: scaleY(0); }
-    .js .adimlar.gorundu .adim-cizgi { transform: scaleY(1); }
-  }
-
-  /* Hero: sayfa açılışında fiş hafifçe yerine oturur */
+  /* Ana sayfanın TEK animasyonu: açılışta canlı boş saatler fişi hafifçe yerine oturur */
   .js .randevu-fisi { animation: fis-gelis .8s cubic-bezier(.2, .7, .2, 1) both .1s; }
   @keyframes fis-gelis { from { transform: translateY(16px); opacity: .4; } to { transform: none; opacity: 1; } }
 }
@@ -494,6 +439,14 @@ a.saat-cipi:hover { border-color: var(--safran); background: rgba(240, 178, 74, 
 .bos-durum { border: 1px dashed var(--cizgi-guclu); border-radius: var(--kose-buyuk); padding: var(--b12) var(--b6); text-align: center; }
 .bos-durum h2 { font-size: 1.3rem; color: #fff; }
 .bos-durum p { color: var(--soluk); max-width: 40ch; margin: 0 auto var(--b6); }
+
+/* ---- Giriş ve kayıt (Views/Hesap) ---- */
+.hesap-kutusu { max-width: 28rem; margin: var(--b8) auto var(--b16); }
+.hesap-kutusu .panel { padding: var(--b8); margin: 0; }
+.hesap-kutusu h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin-bottom: var(--b1); }
+.hesap-kutusu .card-body { padding: 0 !important; }
+.hesap-alt { margin: var(--b6) 0 0; text-align: center; color: var(--soluk); }
+@media (max-width: 575.98px) { .hesap-kutusu .panel { padding: var(--b6); } }
 
 /* ---- Evcil hayvan kartı (Views/Shared/_HayvanKarti.cshtml) ----
    Fotoğraf üstte, altında ad (başlık yazı tipi) ve iki ölçü (mono rakam).

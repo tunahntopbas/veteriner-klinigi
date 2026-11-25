@@ -5,24 +5,25 @@
     - Önünde, derinlikte dizilmiş cam "randevu fişleri" (düz HTML + CSS 3D). Kaydırdıkça kamera
       içlerinden geçiyormuş gibi yaklaşır ve dağılırlar.
     - Ortadaki başlık üç aşamada değişir; sonunda tek bir cam kart ve "Kliniğe gir" butonu.
+    - 25.11: "Atla" kaldırıldı. "Kliniğe gir" giriş yapmamış kullanıcıyı GİRİŞ sayfasına götürür; girişten sonra
+      ana sayfa açılır (HesapController.RoleGoreYonlendirAsync). Giriş yapmış kullanıcı doğrudan ana sayfaya gider.
 
     NASIL ÇALIŞIR? Sayfa 500vh uzunluğunda bir "yol"dur; sahne bu yol boyunca ekrana yapışık
     (position: sticky) durur. Kaydırma oranı 0 → 1 arası bir sayıya (--ilerleme) çevrilir; hem
     Three.js kamerası hem CSS katmanları bu tek sayıya bakar → ikisi hep senkron.
 
     3D açılamazsa (WebGL yok / "hareketi azalt" açık / JS hatası): sahne durağan hâliyle görünür,
-    "Kliniğe gir" ve "Atla" her durumda çalışan sıradan bağlantılardır.
+    "Kliniğe gir" her durumda çalışan sıradan bir bağlantıdır.
 *@
 @{
     Layout = "_GirisLayout";
-    var anaSayfa = Url.Action("AnaSayfa", "Home");
     var girisYapmis = User.Identity?.IsAuthenticated == true;
+    // Giriş yapmışsa ana sayfa, değilse giriş sayfası
+    var kliniginAdresi = girisYapmis ? Url.Action("AnaSayfa", "Home") : Url.Action("Giris", "Hesap");
 }
 
 <header class="giris-ust">
     <span class="marka-ad">Pati<span class="nokta">.</span></span>
-    @* Giriş yapmış kullanıcı sahneyi tekrar izlemek zorunda değil: "Atla" daha belirgin *@
-    <a class="@(girisYapmis ? "btn btn-primary btn-sm" : "giris-atla")" href="@anaSayfa">Atla</a>
 </header>
 
 <section class="giris-yolu" aria-label="Pati Veteriner Kliniği tanıtımı">
@@ -65,14 +66,8 @@
         @* Son aşama: tek cam kart *@
         <div class="son-kart" id="sonKart" data-no="3">
             <h2>@ViewData["KlinikAdi"]</h2>
-            <p>Hizmetlerimizi, hekimlerimizi ve bugünkü boş saatleri görün.</p>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-primary btn-lg" href="@anaSayfa">Kliniğe gir</a>
-                @if (!girisYapmis)
-                {
-                    <a class="btn btn-koyu btn-lg" asp-controller="Hesap" asp-action="Kayit">Üye ol</a>
-                }
-            </div>
+            <p>@(girisYapmis ? "Hizmetlerimizi, hekimlerimizi ve bugünkü boş saatleri görün." : "Giriş yapın; hizmetler, hekimler ve bugünkü boş saatler sizi bekliyor.")</p>
+            <a class="btn btn-primary btn-lg" href="@kliniginAdresi">Kliniğe gir</a>
         </div>
 
         <p class="kaydir-ipucu" aria-hidden="true">Kaydırın</p>

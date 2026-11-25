@@ -4,7 +4,7 @@
 
 // ------------------------------------------------------------------
 // KAYDIRINCA BELİRME (kütüphanesiz)
-// "belir" sınıflı bölümler ve "adimlar" listesi ekrana girince "gorundu" sınıfı alır;
+// "belir" sınıflı bölümler ekrana girince "gorundu" sınıfı alır (şu an ana sayfa kullanmıyor; iç sayfalar için hazır);
 // geçişin kendisi CSS'te (site.css → 8. bölüm).
 //
 // NEDEN IntersectionObserver? Kaydırma olayını (scroll) her pikselde dinlemek yerine
@@ -17,7 +17,7 @@
 //   - Başlangıç stili CSS'te yalnızca <html class="js"> varken uygulanır (JS yoksa gizli içerik yok).
 // ------------------------------------------------------------------
 (function () {
-    var hedefler = document.querySelectorAll('.belir, .adimlar');
+    var hedefler = document.querySelectorAll('.belir');
     if (hedefler.length === 0) return;
 
     var hareketIstemiyor = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

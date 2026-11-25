@@ -89,6 +89,10 @@ public class HesapController : Controller
     [HttpGet]
     public IActionResult Giris(string? donusAdresi)
     {
+        // Zaten giriş yapmışsa formu tekrar gösterme
+        if (User.Identity?.IsAuthenticated == true)
+            return RedirectToAction("AnaSayfa", "Home");
+
         ViewData["Title"] = "Giriş Yap";
         return View(new GirisVM { DonusAdresi = donusAdresi });
     }
@@ -133,7 +137,8 @@ public class HesapController : Controller
     public async Task<IActionResult> Cikis()
     {
         await _girisYoneticisi.SignOutAsync();
-        return RedirectToAction("AnaSayfa", "Home");
+        // Üst barda giriş bağlantısı olmadığı için çıkıştan sonra doğrudan giriş sayfası açılır
+        return RedirectToAction(nameof(Giris));
     }
 
     // GET /Hesap/ErisimEngellendi — giriş yapmış ama rolü yetmeyen kullanıcı buraya düşer (403).
@@ -160,7 +165,8 @@ public class HesapController : Controller
         if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Veteriner))
             return RedirectToAction("Index", "Randevu", new { area = "Hekim" });
 
-        return RedirectToAction("Index", "EvcilHayvan");
+        // Üye: ana sayfa (25.11'e kadar "Hayvanlarım" idi; "/" → Kliniğe gir → Giriş → Ana sayfa akışı)
+        return RedirectToAction("AnaSayfa", "Home");
     }
 
     // Identity hata kodlarını Türkçe mesaja çevirir.
