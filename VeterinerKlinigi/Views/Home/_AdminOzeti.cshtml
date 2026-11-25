@@ -1,0 +1,60 @@
+@*
+    ADMİN ÖZETİ (ana sayfa) — OzetServisi.AdminOzetiAsync
+    Üstte dört sayı (bugün, onay bekleyen, bu ay ciro, aktif hekim), altında önümüzdeki 7 günün doluluğu.
+    Grafik kütüphanesiz: her gün bir CSS çubuğu, yüksekliği --oran (0–1) ile; en dolu gün = 1.
+    Sağda yönetim kısayolları.
+*@
+@model AnaSayfaVM
+@{
+    var o = Model.Admin!;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var enCok = Math.Max(1, o.Haftalik.Max(g => g.RandevuSayisi));
+    var bugun = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="sayi-satiri">
+    <a class="ozet-kart sayi" style="--i:0" asp-area="Admin" asp-controller="Randevu" asp-action="Index">
+        <span class="sayi-deger veri">@o.BugunkuRandevuSayisi</span><span class="sayi-etiket">bugünkü randevu</span>
+    </a>
+    <a class="ozet-kart sayi @(o.OnayBekleyenSayisi > 0 ? "dikkat" : "")" style="--i:1" asp-area="Admin" asp-controller="Randevu" asp-action="Index" asp-route-durum="Bekliyor">
+        <span class="sayi-deger veri">@o.OnayBekleyenSayisi</span><span class="sayi-etiket">onay bekleyen</span>
+    </a>
+    <a class="ozet-kart sayi" style="--i:2" asp-area="Admin" asp-controller="Rapor" asp-action="Index">
+        <span class="sayi-deger veri">@o.BuAyCiro.ToString("N0", tr) TL</span><span class="sayi-etiket">bu ay ciro, @o.BuAyTamamlanan tamamlanan</span>
+    </a>
+    <a class="ozet-kart sayi" style="--i:3" asp-area="Admin" asp-controller="Veteriner" asp-action="Index">
+        <span class="sayi-deger veri">@o.AktifHekimSayisi</span><span class="sayi-etiket">aktif hekim</span>
+    </a>
+</div>
+
+<div class="ozet-izgara">
+    <div class="ozet-sol">
+        <section class="ozet-kart" style="--i:4" aria-labelledby="haftaBaslik">
+            <h2 id="haftaBaslik" class="kart-etiket">Önümüzdeki 7 gün</h2>
+            <ol class="hafta-grafigi" aria-label="Günlere göre randevu sayısı">
+                @foreach (var g in o.Haftalik)
+                {
+                    <li style="--oran:@((g.RandevuSayisi / (double)enCok).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture))" class="@(g.Gun == bugun ? "bugun" : "")">
+                        <span class="cubuk-sayi veri">@g.RandevuSayisi</span>
+                        <span class="cubuk" aria-hidden="true"></span>
+                        <span class="cubuk-gun">@(g.Gun == bugun ? "Bugün" : g.Gun.ToString("ddd", tr))</span>
+                    </li>
+                }
+            </ol>
+            <p class="panel-not">Reddedilen ve iptal edilen randevular sayılmaz.</p>
+        </section>
+    </div>
+    <div class="ozet-sag">
+        <section class="ozet-kart" style="--i:5" aria-labelledby="kisayolBaslik">
+            <h2 id="kisayolBaslik" class="kart-etiket">Yönetim</h2>
+            <ul class="kisayollar">
+                <li><a asp-area="Admin" asp-controller="Randevu" asp-action="Index">Randevular</a></li>
+                <li><a asp-area="Admin" asp-controller="Rapor" asp-action="Index">Hizmet raporu</a></li>
+                <li><a asp-area="Admin" asp-controller="Veteriner" asp-action="Index">Hekimler ve müsaitlik</a></li>
+                <li><a asp-area="Admin" asp-controller="Hizmet" asp-action="Index">Hizmetler</a></li>
+                <li><a asp-area="Admin" asp-controller="Uzmanlik" asp-action="Index">Uzmanlıklar</a></li>
+                <li><a asp-area="Admin" asp-controller="Klinik" asp-action="Index">Klinik ve çalışma saatleri</a></li>
+            </ul>
+        </section>
+    </div>
+</div>

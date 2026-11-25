@@ -51,10 +51,13 @@ public class RandevuController : Controller
 
     // GET /Randevu/Olustur?hayvanId=1
     [HttpGet]
-    public async Task<IActionResult> Olustur(int? hayvanId)
+    // Ana sayfadaki hızlı randevu kartından gelinirse hizmet, gün, hekim ve saat önceden seçili gelir:
+    // /Randevu/Olustur?hizmetId=1&tarih=2026-12-07&veterinerId=1&saat=10:00 (son karar yine POST'ta servisin)
+    public async Task<IActionResult> Olustur(int? hayvanId, int? hizmetId, DateOnly? tarih, int? veterinerId, TimeOnly? saat)
     {
         ViewData["Title"] = "Randevu Al";
-        var vm = new RandevuFormVM { EvcilHayvanId = hayvanId ?? 0 };
+        var vm = new RandevuFormVM { EvcilHayvanId = hayvanId ?? 0, HizmetId = hizmetId ?? 0, VeterinerId = veterinerId ?? 0, Saat = saat };
+        if (tarih is not null) vm.Tarih = tarih.Value;
         await SecenekleriDoldurAsync(vm);
 
         if (vm.HayvanSecenekleri.Count == 0)

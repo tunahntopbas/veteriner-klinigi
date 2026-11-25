@@ -1,0 +1,175 @@
+@*
+    ÜYE ÖZETİ (ana sayfa) — OzetServisi.UyeOzetiAsync
+    Sol: sıradaki randevu (geri sayımlı) + tüm hayvanların yaklaşan aşıları tek çizelgede.
+    Sağ: hızlı randevu (REST API, jQuery) + hayvan şeridi + son muayene notu.
+    Kartlar "ozet-kart" sınıfıyla açılışta sırayla gelir (--i = sıra).
+*@
+@model AnaSayfaVM
+@{
+    var o = Model.Uye!;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var r = o.SiradakiRandevu;
+    var muayene = Model.Hizmetler.FirstOrDefault(h => h.Ad == "Genel Muayene") ?? Model.Hizmetler.FirstOrDefault();
+
+    string GunMetni(DateOnly g)
+    {
+        var bugun = DateOnly.FromDateTime(DateTime.Today);
+        return g == bugun ? "Bugün" : g == bugun.AddDays(1) ? "Yarın" : g.ToString("d MMMM ddd", tr);
+    }
+}
+
+<div class="ozet-izgara">
+    <div class="ozet-sol">
+
+        @* ---- Sıradaki randevu ---- *@
+        <section class="ozet-kart siradaki" style="--i:0" aria-labelledby="siradakiBaslik">
+            <h2 id="siradakiBaslik" class="kart-etiket">Sıradaki randevu</h2>
+            @if (r is null)
+            {
+                <p class="siradaki-bos">Yaklaşan randevunuz yok.</p>
+                <a class="btn btn-primary" asp-controller="Randevu" asp-action="Olustur">Randevu al</a>
+            }
+            else
+            {
+                <div class="siradaki-govde">
+                    <div>
+                        <p class="siradaki-ne">@r.EvcilHayvan?.Ad, @r.Hizmet?.Ad</p>
+                        <p class="siradaki-kim">@r.Veteriner?.AdSoyad</p>
+                        <p class="siradaki-zaman">
+                            <time datetime="@r.BaslangicZamani.ToString("yyyy-MM-ddTHH:mm")">@r.BaslangicZamani.ToString("d MMMM dddd, HH:mm", tr)</time>
+                            <partial name="_DurumRozeti" model="r.Durum" />
+                        </p>
+                    </div>
+                    <div class="geri-sayim">
+                        @{ var kalan = r.BaslangicZamani - DateTime.Now; }
+                        <span class="geri-sayim-sayi veri" data-geri-sayim="@r.BaslangicZamani.ToString("yyyy-MM-ddTHH:mm")">@(kalan.Days > 0 ? $"{kalan.Days} gün {kalan.Hours} saat" : kalan.Hours > 0 ? $"{kalan.Hours} saat {kalan.Minutes} dk" : $"{kalan.Minutes} dk")</span>
+                        <span class="geri-sayim-etiket">kaldı</span>
+                    </div>
+                </div>
+                <div class="siradaki-alt">
+                    <a asp-controller="Randevu" asp-action="Detay" asp-route-id="@r.Id">Randevu ayrıntısı</a>
+                    @if (o.YaklasanRandevuSayisi > 1)
+                    {
+                        <a asp-controller="Randevu" asp-action="Index">@(o.YaklasanRandevuSayisi - 1) randevu daha</a>
+                    }
+                </div>
+            }
+        </section>
+
+        @* ---- Yaklaşan aşılar: tüm hayvanlar tek çizelgede ---- *@
+        <section class="ozet-kart" style="--i:1" aria-labelledby="asilarBaslik">
+            <h2 id="asilarBaslik" class="kart-etiket">Önümüzdeki 60 günün aşıları</h2>
+            @if (o.YaklasanAsilar.Count == 0)
+            {
+                <p class="text-body-secondary mb-0">Önümüzdeki 60 günde planlı aşı yok.</p>
+            }
+            else
+            {
+                <ol class="asi-cizelgesi genel">
+                    @foreach (var a in o.YaklasanAsilar)
+                    {
+                        <li class="cizelge-olay planli @(a.KalanGun <= 30 ? "yakin" : "")">
+                            <time class="veri" datetime="@a.Tarih.ToString("yyyy-MM-dd")">@a.Tarih.ToString("dd.MM.yyyy")</time>
+                            <span class="olay-ad"><a asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@a.HayvanId">@a.HayvanAdi</a>, @a.AsiAdi</span>
+                            <span class="olay-durum">@(a.KalanGun == 0 ? "bugün" : $"{a.KalanGun} gün sonra")</span>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </div>
+
+    <div class="ozet-sag">
+
+        @* ---- Hızlı randevu (ÖDEV 5.1: jQuery → REST API) ---- *@
+        @if (muayene is not null && Model.AcikGunler.Count > 0)
+        {
+            <section class="randevu-fisi isikli ozet-kart" style="--i:2" id="hizliRandevu" aria-labelledby="hizliBaslik">
+                <header class="randevu-fisi-ust hizli-ust">
+                    <h2 id="hizliBaslik"><span class="canli-isaret" aria-hidden="true"></span>Boş saatler</h2>
+                    <label class="visually-hidden" for="hizliHizmet">Hizmet</label>
+                    <select id="hizliHizmet" class="form-select form-select-sm">
+                        @foreach (var h in Model.Hizmetler)
+                        {
+                            <option value="@h.Id" selected="@(h.Id == muayene.Id)">@h.Ad (@h.SureDakika dk)</option>
+                        }
+                    </select>
+                </header>
+                <div class="gun-cipleri" role="group" aria-label="Gün">
+                    @for (var i = 0; i < Model.AcikGunler.Count; i++)
+                    {
+                        var g = Model.AcikGunler[i];
+                        <button type="button" class="gun-cipi" aria-pressed="@(i == 0 ? "true" : "false")" data-tarih="@g.ToString("yyyy-MM-dd")">@GunMetni(g)</button>
+                    }
+                </div>
+                <div class="randevu-fisi-govde" id="hizliGovde" aria-live="polite">
+                    @for (var i = 0; i < 2; i++)
+                    {
+                        <div class="fis-satir" aria-hidden="true">
+                            <div class="iskelet" style="width:45%"></div>
+                            <div class="iskelet" style="width:80%"></div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        @* ---- Hayvan şeridi ---- *@
+        <section class="ozet-kart" style="--i:3" aria-labelledby="hayvanlarBaslik">
+            <div class="kart-ust">
+                <h2 id="hayvanlarBaslik" class="kart-etiket">Hayvanlarım</h2>
+                <a asp-controller="EvcilHayvan" asp-action="Ekle" class="kart-baglanti">Yeni ekle</a>
+            </div>
+            @if (o.Hayvanlar.Count == 0)
+            {
+                <p class="text-body-secondary mb-0">Randevu almak için önce hayvanınızı ekleyin.</p>
+            }
+            else
+            {
+                <ul class="hayvan-seridi">
+                    @foreach (var h in o.Hayvanlar)
+                    {
+                        var yakin = h.SiradakiAsiyaKalanGun is <= 30;
+                        <li>
+                            <a asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@h.Id"
+                               title="@(h.SiradakiAsiyaKalanGun is null ? "Planlı aşı yok" : $"Sıradaki aşıya {h.SiradakiAsiyaKalanGun} gün")">
+                                <span class="serit-avatar @(yakin ? "yakin" : "")">
+                                    @if (h.FotografVar)
+                                    {
+                                        <img src="@Url.Action("Fotograf", "EvcilHayvan", new { id = h.Id })" alt="" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        @h.Ad[..1]
+                                    }
+                                </span>
+                                <span class="serit-ad">@h.Ad</span>
+                                <span class="serit-bilgi">@(h.SiradakiAsiyaKalanGun is null ? h.Tur : $"aşı {h.SiradakiAsiyaKalanGun} gün")</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        @* ---- Son muayene notu ---- *@
+        @if (o.SonMuayene?.MuayeneNotu is { } not)
+        {
+            <section class="ozet-kart" style="--i:4" aria-labelledby="notBaslik">
+                <h2 id="notBaslik" class="kart-etiket">Son muayene notu</h2>
+                <p class="not-baslik">@o.SonMuayene.EvcilHayvan?.Ad, @o.SonMuayene.BaslangicZamani.ToString("d MMMM", tr)</p>
+                <dl class="not-ozet">
+                    @if (!string.IsNullOrWhiteSpace(not.Teshis))
+                    {
+                        <div><dt>Teşhis</dt><dd>@not.Teshis</dd></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(not.Tedavi))
+                    {
+                        <div><dt>Tedavi</dt><dd>@not.Tedavi</dd></div>
+                    }
+                </dl>
+                <p class="not-kim">@o.SonMuayene.Veteriner?.AdSoyad</p>
+            </section>
+        }
+    </div>
+</div>

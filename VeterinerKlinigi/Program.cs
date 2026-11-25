@@ -115,6 +115,7 @@ builder.Services.AddScoped<IAsiServisi, AsiServisi>();
 builder.Services.AddScoped<IMusaitlikServisi, MusaitlikServisi>();
 builder.Services.AddScoped<IRandevuServisi, RandevuServisi>();
 builder.Services.AddScoped<IRaporServisi, RaporServisi>();
+builder.Services.AddScoped<IOzetServisi, OzetServisi>();      // ana sayfa özetleri (25.11)
 builder.Services.AddScoped<IMcpAnahtarServisi, McpAnahtarServisi>();
 
 // ---------------------------------------------------------------

@@ -1,220 +1,157 @@
-﻿@*
-    ANA SAYFA
-    - Klinik, hizmetler ve hekimler sunucuda hazırlanır (HomeController.AnaSayfa → AnaSayfaVM).
-    - "/" adresi artık 3D giriş sahnesi (Views/Home/Index.cshtml); bu sayfaya oradan "Kliniğe gir" ile gelinir.
-    - ÖDEV 5.1 — Sağdaki "boş saatler" fişi sayfa açıldıktan sonra jQuery ile REST API'den doldurulur:
-      GET /api/veterinerler/uygun?hizmetId=..&tarih=..  (MVC formu ve MCP aracıyla AYNI servis: MusaitlikServisi)
-    - 25.11 SADELEŞTİRME: sayfa göz yoruyordu. "Randevu nasıl işler" adımları, örnek asistan konuşması,
-      çalışma saatleri ve adres bölümleri kaldırıldı (saatler ve adres zaten alt bilgide). Kalan üç bölüm:
-      hero + canlı boş saatler, hizmetler, hekimler; en altta tek satırlık asistan şeridi.
-      Açıklama paragrafları kısaldı, hizmetler tek satıra indi.
-    - ANİMASYON (25.11, "sade ama canlı"): her şey aynı anda hareket etmez, sırayla ve bir kez olur.
-      1) Açılış: başlık satırları maskenin altından yükselir, metin ve butonlar arkasından gelir, fiş yerine oturur.
-      2) Boş saat çipleri API cevabı gelince soldan sağa tek tek belirir; "canlı" noktası yavaşça nabız atar.
-      3) Kaydırınca: her bölümün başlığı, sonra satırları kısa aralıklarla gelir ("sirali" sınıfı, site.js).
-      4) Fare: fişin camında imleci izleyen hafif bir ışık ("isikli" sınıfı, site.js); hizmet satırında safran çizgi.
-      Hepsi yalnızca CSS transform/opacity (akıcı); "hareketi azalt" açıksa hiçbiri çalışmaz.
+@*
+    ANA SAYFA = KİŞİSEL ÖZET (25.11)
+    - Giriş gerekir ([Authorize]). Rol kime aitse o özet çizilir:
+        Üye   → Views/Home/_UyeOzeti.cshtml
+        Hekim → Views/Home/_HekimOzeti.cshtml
+        Admin → Views/Home/_AdminOzeti.cshtml
+    - Liste sayfalarının (Hizmetler, Hekimlerimiz, Hayvanlarım, Randevularım) tekrarı DEĞİL:
+      "şu an benim için ne önemli?" sorusunun cevabı. Veri: OzetServisi (HomeController.AnaSayfa).
+    - Üst kısım herkes için aynı: saate göre selamlama + kliniğin şu anki durumu (açık/kapalı).
+    - ANİMASYON: açılışta başlık maskeden yükselir, kartlar sırayla gelir (site.css §8 ve §10).
+      "Hareketi azalt" açıksa hiçbiri çalışmaz.
+    - Betikler aşağıdaki Scripts bölümünde (partial view'lar kendi Scripts bölümünü tanımlayamaz).
 *@
 @model AnaSayfaVM
-@{
-    var klinik = Model.Klinik;
-    var simdi = DateTime.Now;
 
-    // Fişte gösterilecek hizmet: Genel Muayene (yoksa ilk aktif hizmet).
-    var muayene = Model.Hizmetler.FirstOrDefault(h => h.Ad == "Genel Muayene") ?? Model.Hizmetler.FirstOrDefault();
+<div class="ozet-ust acilis">
+    <h1 class="ozet-selam"><span class="satir"><span>@Model.Selam</span></span></h1>
+    <p class="klinik-durumu acilis-sonra">
+        <span class="durum-noktasi @(Model.KlinikAcik ? "acik" : "kapali")" aria-hidden="true"></span>@Model.KlinikDurumu
+    </p>
+</div>
 
-    // Hangi günün boş saatleri gösterilsin? Bugün açıksa ve kapanışa en az hizmet süresi kadar zaman varsa bugün;
-    // değilse sonraki ilk açık gün. Klinik saatleri veritabanından geldiği için admin değiştirince bu da değişir.
-    DateOnly? hedefGun = null;
-    for (var i = 0; i < 8 && muayene is not null; i++)
-    {
-        var gun = DateOnly.FromDateTime(simdi).AddDays(i);
-        var c = klinik.CalismaSaatleri.FirstOrDefault(x => x.Gun == gun.DayOfWeek);
-        if (c is null || c.Kapali) continue;
-        if (i == 0 && TimeOnly.FromDateTime(simdi).AddMinutes(muayene.SureDakika) > c.KapanisSaati) continue;
-        hedefGun = gun;
-        break;
-    }
-    var hedefGunMetni = hedefGun is null ? "" :
-        hedefGun == DateOnly.FromDateTime(simdi) ? "Bugün" :
-        hedefGun == DateOnly.FromDateTime(simdi).AddDays(1) ? "Yarın" :
-        GunAdlari.Ad(hedefGun.Value.DayOfWeek);
-
-    // Ziyaretçinin rolüne göre ana buton nereye gitsin?
-    var hekimMi = User.IsInRole(Roller.Veteriner);
-    var adminMi = User.IsInRole(Roller.Admin);
-
-    string BasHarfler(string adSoyad) =>
-        string.Concat(adSoyad.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0], new System.Globalization.CultureInfo("tr-TR"))));
+@if (Model.Uye is not null)
+{
+    <partial name="_UyeOzeti" model="Model" />
 }
-
-@* ============================ HERO ============================ *@
-<section class="hero" aria-labelledby="heroBaslik">
-    <div class="container">
-        <div class="row g-4 g-lg-5 align-items-center">
-            <div class="col-lg-6">
-                @* Her satır kendi maskesinde (overflow: hidden) aşağıdan yükselir *@
-                <h1 id="heroBaslik" class="hero-baslik acilis">
-                    <span class="satir"><span>Boş saati görün,</span></span>
-                    <span class="satir"><span>randevunuzu hemen alın.</span></span>
-                </h1>
-                <p class="hero-metin acilis-sonra">Hekimlerimizin bugünkü müsait saatleri yanda. Bir saat seçin, gerisini randevu formu halleder.</p>
-                <div class="d-flex flex-wrap gap-2 acilis-sonra">
-                    @if (hekimMi)
-                    {
-                        <a class="btn btn-primary btn-lg" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Randevularıma git</a>
-                    }
-                    else if (adminMi)
-                    {
-                        <a class="btn btn-primary btn-lg" asp-area="Admin" asp-controller="Panel" asp-action="Index">Yönetim paneline git</a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary btn-lg" asp-controller="Randevu" asp-action="Olustur">Randevu al</a>
-                    }
-                    <a class="btn btn-koyu btn-lg" href="#hizmetler">Hizmetler ve ücretler</a>
-                </div>
-            </div>
-
-            <div class="col-lg-5 offset-lg-1">
-                @* Canlı boş saatler "randevu fişi". Veriyi aşağıdaki betik REST API'den getirir. *@
-                <article class="randevu-fisi isikli" aria-labelledby="fisBaslik"
-                         id="bosSaatFisi"
-                         data-hizmet-id="@muayene?.Id"
-                         data-tarih="@hedefGun?.ToString("yyyy-MM-dd")">
-                    <header class="randevu-fisi-ust">
-                        <h2 id="fisBaslik"><span class="canli-isaret" aria-hidden="true"></span>@(hedefGun is null ? "Boş saatler" : $"{hedefGunMetni} boş saatler")</h2>
-                        @if (hedefGun is not null)
-                        {
-                            <time class="veri" datetime="@hedefGun.Value.ToString("yyyy-MM-dd")">@hedefGun.Value.ToString("dd.MM.yyyy")</time>
-                        }
-                    </header>
-                    <div class="randevu-fisi-govde" id="fisGovde" aria-live="polite">
-                        @if (hedefGun is null || muayene is null)
-                        {
-                            <p class="fis-bos mb-0">Önümüzdeki günlerde açık gün görünmüyor. Çalışma saatlerini aşağıda bulabilirsiniz.</p>
-                        }
-                        else
-                        {
-                            @* İskelet satırlar: veri gelene kadar düzen kaymasın *@
-                            @for (var i = 0; i < 3; i++)
-                            {
-                                <div class="fis-satir" aria-hidden="true">
-                                    <div class="iskelet" style="width:45%"></div>
-                                    <div class="iskelet" style="width:80%"></div>
-                                </div>
-                            }
-                        }
-                    </div>
-                    @if (muayene is not null)
-                    {
-                        <footer class="randevu-fisi-alt">
-                            @muayene.Ad için, <span class="veri">@muayene.SureDakika</span> dakika. Diğer hizmetlerin saatleri randevu formunda.
-                        </footer>
-                    }
-                </article>
-            </div>
-        </div>
+else if (Model.Hekim is not null)
+{
+    <partial name="_HekimOzeti" model="Model" />
+}
+else if (Model.Admin is not null)
+{
+    <partial name="_AdminOzeti" model="Model" />
+}
+else
+{
+    @* Hekim rolü var ama hekim kaydı yoksa (admin henüz eşleştirmediyse) *@
+    <div class="bos-durum">
+        <h2>Hesabınız bir hekim kaydına bağlı değil</h2>
+        <p>Yöneticiden hesabınızı hekim kaydıyla eşleştirmesini isteyin.</p>
     </div>
-</section>
-
-@* ============================ HİZMETLER ============================
-   Fiyat listesi gibi: her hizmet TEK satır (ad, süre, ücret). Açıklamalar kaldırıldı; detay Hizmetler sayfasında. *@
-<section class="bolum" id="hizmetler" aria-labelledby="hizmetlerBaslik">
-    <div class="container belir">
-        <div class="bolum-ust">
-            <h2 id="hizmetlerBaslik" class="bolum-baslik">Hizmetler ve ücretler</h2>
-            <a class="bolum-baglanti" asp-controller="Home" asp-action="Hizmetler">Açıklamalarıyla görün</a>
-        </div>
-        <ul class="hizmet-listesi sirali">
-            @foreach (var h in Model.Hizmetler)
-            {
-                <li>
-                    <span class="hizmet-ad">@h.Ad</span>
-                    <span class="sure">@h.SureDakika dk</span>
-                    <span class="ucret veri">@h.Ucret.ToString("N0") TL</span>
-                </li>
-            }
-        </ul>
-    </div>
-</section>
-
-@* ============================ HEKİMLER ============================ *@
-<section class="bolum" aria-labelledby="hekimlerBaslik">
-    <div class="container belir">
-        <h2 id="hekimlerBaslik" class="bolum-baslik">Hekimlerimiz</h2>
-        <div class="hekim-listesi sirali">
-            @foreach (var v in Model.Hekimler)
-            {
-                <article class="hekim">
-                    <div class="hekim-bas" aria-hidden="true">@BasHarfler(v.AdSoyad)</div>
-                    <div>
-                        <h3>@v.AdSoyad</h3>
-                        <p class="unvan">@v.Unvan, @string.Join(", ", v.Uzmanliklar.OrderBy(u => u.Ad).Select(u => u.Ad))</p>
-                    </div>
-                </article>
-            }
-        </div>
-    </div>
-</section>
-
-@* ============================ YAPAY ZEKÂ ASİSTANI (MCP) ============================
-   Tek satırlık şerit: ne olduğu + nereden bağlanacağı. Ayrıntı README §7 ve Profil sayfasında. *@
-<section class="bolum" aria-labelledby="asistanBaslik">
-    <div class="container">
-        <div class="asistan-serit belir isikli">
-            <div>
-                <h2 id="asistanBaslik">Aşı takvimini yapay zekâ asistanınıza sorun</h2>
-                <p>Claude Desktop gibi bir asistan, MCP ile yalnızca sizin hayvanlarınızı ve randevularınızı görür.</p>
-            </div>
-            <a class="btn btn-koyu" asp-controller="Profil" asp-action="Index">Erişim anahtarı oluştur</a>
-        </div>
-    </div>
-</section>
+}
 
 @section Scripts {
     <script>
         // ------------------------------------------------------------------
-        // ÖDEV 5.1 — REST API tüketimi: canlı boş saatler fişi.
-        // GET /api/veterinerler/uygun → [{ veterinerId, adSoyad, unvan, uzmanliklar, bosSaatler: ["09:00", ...] }]
-        // Cevap DTO olduğu için (UygunHekimDto) burada sadece gösteriyoruz; kural sunucuda.
+        // GERİ SAYIM: data-geri-sayim="2026-12-07T10:00" olan öğeye "3 gün 4 saat" yazar, dakikada bir yeniler.
+        // İlk değeri sunucu yazar (JS kapalıysa da doğru görünür); bu betik sayfa açık kaldıkça günceller.
         // ------------------------------------------------------------------
-        (function () {
-            var fis = $('#bosSaatFisi');
-            var hizmetId = fis.data('hizmet-id');
-            var tarih = fis.data('tarih');
-            if (!hizmetId || !tarih) return;      // açık gün yoksa sunucu zaten boş durumu yazdı
-
-            var govde = $('#fisGovde');
-            var randevuAdresi = '@Url.Action("Olustur", "Randevu", new { area = "" })';
-            function guvenli(m) { return $('<div>').text(m ?? '').html(); }   // XSS'e karşı metni kaçır
-
-            $.getJSON('/api/veterinerler/uygun', { hizmetId: hizmetId, tarih: tarih })
-                .done(function (hekimler) {
-                    govde.empty();
-                    var dolu = hekimler.filter(function (h) { return h.bosSaatler.length > 0; });
-                    if (dolu.length === 0) {
-                        govde.append('<p class="fis-bos mb-0">Bu gün için boş saat kalmadı. Randevu formundan başka bir gün seçebilirsiniz.</p>');
-                        return;
-                    }
-                    var sira = 0;                         // çiplerin belirme sırası (CSS --i)
-                    $.each(dolu, function (_, h) {
-                        var ilkSaatler = h.bosSaatler.slice(0, 5);
-                        var kalan = h.bosSaatler.length - ilkSaatler.length;
-                        var cipler = $.map(ilkSaatler, function (s) {
-                            return '<a class="saat-cipi yeni" style="--i:' + (sira++) + '" href="' + randevuAdresi + '" aria-label="' + guvenli(h.adSoyad) + ', ' + s + '">' + s + '</a>';
-                        }).join('');
-                        if (kalan > 0) cipler += '<span class="saat-cipi-fazla">+' + kalan + ' saat daha</span>';
-                        govde.append(
-                            '<div class="fis-satir">' +
-                                '<div class="fis-hekim"><strong>' + guvenli(h.adSoyad) + '</strong><span>' + guvenli(h.uzmanliklar.join(', ')) + '</span></div>' +
-                                '<div class="saat-cipleri">' + cipler + '</div>' +
-                            '</div>');
-                    });
-                })
-                .fail(function () {
-                    govde.html('<p class="fis-bos mb-0">Boş saatler şu an alınamadı. Randevu formundan güncel saatleri görebilirsiniz.</p>');
-                });
-        })();
+        function kalanYaz(ms) {
+            if (ms <= 0) return 'şimdi';
+            var dk = Math.floor(ms / 60000), gun = Math.floor(dk / 1440), saat = Math.floor((dk % 1440) / 60), dakika = dk % 60;
+            if (gun > 0) return gun + ' gün ' + saat + ' saat';
+            if (saat > 0) return saat + ' saat ' + dakika + ' dk';
+            return dakika + ' dk';
+        }
+        function sayaclariGuncelle() {
+            $('[data-geri-sayim]').each(function () {
+                $(this).text(kalanYaz(new Date($(this).data('geri-sayim')) - new Date()));
+            });
+        }
+        sayaclariGuncelle();
+        setInterval(sayaclariGuncelle, 60000);
     </script>
+
+    @if (Model.Uye is not null)
+    {
+        <script>
+            // ------------------------------------------------------------------
+            // ÖDEV 5.1 — HIZLI RANDEVU: REST API tüketimi.
+            // Hizmet (select) ve gün (çip) seçildikçe GET /api/veterinerler/uygun?hizmetId=..&tarih=.. çağrılır;
+            // cevap [{ veterinerId, adSoyad, uzmanliklar, bosSaatler: ["09:00", ...] }] çiplere dönüşür.
+            // Bir saate tıklamak randevu formunu o hizmet, gün, hekim ve saat SEÇİLİ olarak açar.
+            // Kural sunucuda (MusaitlikServisi); burada sadece gösteriyoruz.
+            // ------------------------------------------------------------------
+            (function () {
+                var kart = $('#hizliRandevu');
+                if (kart.length === 0) return;
+                var govde = $('#hizliGovde');
+                var formAdresi = '@Url.Action("Olustur", "Randevu")';
+                function guvenli(m) { return $('<div>').text(m ?? '').html(); }   // XSS'e karşı metni kaçır
+
+                function yukle() {
+                    var hizmetId = $('#hizliHizmet').val();
+                    var tarih = kart.find('.gun-cipi[aria-pressed=true]').data('tarih');
+                    if (!hizmetId || !tarih) return;
+                    govde.attr('aria-busy', 'true').addClass('yukleniyor');
+
+                    $.getJSON('/api/veterinerler/uygun', { hizmetId: hizmetId, tarih: tarih })
+                        .done(function (hekimler) {
+                            govde.empty();
+                            var dolu = hekimler.filter(function (h) { return h.bosSaatler.length > 0; });
+                            if (dolu.length === 0) {
+                                govde.append('<p class="fis-bos mb-0">Bu gün bu hizmet için boş saat yok. Başka bir gün seçin.</p>');
+                                return;
+                            }
+                            var sira = 0;                              // çiplerin belirme sırası (CSS --i)
+                            $.each(dolu, function (_, h) {
+                                var ilk = h.bosSaatler.slice(0, 6);
+                                var kalan = h.bosSaatler.length - ilk.length;
+                                var cipler = $.map(ilk, function (s) {
+                                    var adres = formAdresi + '?' + $.param({ hizmetId: hizmetId, tarih: tarih, veterinerId: h.veterinerId, saat: s });
+                                    return '<a class="saat-cipi yeni" style="--i:' + (sira++) + '" href="' + adres + '" aria-label="' +
+                                        guvenli(h.adSoyad) + ', ' + s + '">' + s + '</a>';
+                                }).join('');
+                                if (kalan > 0) cipler += '<span class="saat-cipi-fazla">+' + kalan + ' saat daha</span>';
+                                govde.append(
+                                    '<div class="fis-satir">' +
+                                        '<div class="fis-hekim"><strong>' + guvenli(h.adSoyad) + '</strong><span>' + guvenli(h.uzmanliklar.join(', ')) + '</span></div>' +
+                                        '<div class="saat-cipleri">' + cipler + '</div>' +
+                                    '</div>');
+                            });
+                        })
+                        .fail(function () {
+                            govde.html('<p class="fis-bos mb-0">Boş saatler şu an alınamadı. Randevu formundan deneyin.</p>');
+                        })
+                        .always(function () { govde.attr('aria-busy', 'false').removeClass('yukleniyor'); });
+                }
+
+                $('#hizliHizmet').on('change', yukle);
+                kart.on('click', '.gun-cipi', function () {
+                    kart.find('.gun-cipi').attr('aria-pressed', 'false');
+                    $(this).attr('aria-pressed', 'true');
+                    yukle();
+                });
+                yukle();
+            })();
+        </script>
+    }
+
+    @if (Model.Hekim is not null)
+    {
+        <script>
+            // ------------------------------------------------------------------
+            // HEKİM ÇİZELGESİ: "şu an" çizgisi. Çizelge açılıştan kapanışa 0–100% yükseklik;
+            // çizginin yeri = (şimdi − açılış) / (kapanış − açılış). Dakikada bir yenilenir.
+            // Açılış/kapanış dışındaysa çizgi gizlenir. Geçmiş randevular "gecti" sınıfıyla soluklaşır.
+            // ------------------------------------------------------------------
+            (function () {
+                var cizelge = $('#gunCizelgesi');
+                if (cizelge.length === 0) return;
+                var acilis = cizelge.data('acilis'), kapanis = cizelge.data('kapanis');   // gün içindeki dakika
+                function guncelle() {
+                    var t = new Date(), dk = t.getHours() * 60 + t.getMinutes();
+                    var oran = (dk - acilis) / (kapanis - acilis);
+                    $('#suAnCizgisi').toggle(oran >= 0 && oran <= 1).css('top', (oran * 100) + '%')
+                        .find('time').text(('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2));
+                    cizelge.find('.cizelge-randevu').each(function () {
+                        $(this).toggleClass('gecti', $(this).data('bitis') <= dk);
+                    });
+                }
+                guncelle();
+                setInterval(guncelle, 60000);
+            })();
+        </script>
+    }
 }

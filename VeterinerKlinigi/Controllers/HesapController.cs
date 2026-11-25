@@ -153,21 +153,10 @@ public class HesapController : Controller
     // Yardımcılar
     // ---------------------------------------------------------------
 
-    // Girişten sonra herkesi kendi ana sayfasına gönder.
-    private async Task<IActionResult> RoleGoreYonlendirAsync(string eposta)
-    {
-        var kullanici = await _kullaniciYoneticisi.FindByEmailAsync(eposta);
-        if (kullanici is null)
-            return RedirectToAction("AnaSayfa", "Home");
-
-        if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Admin))
-            return RedirectToAction("Index", "Panel", new { area = "Admin" });
-        if (await _kullaniciYoneticisi.IsInRoleAsync(kullanici, Roller.Veteriner))
-            return RedirectToAction("Index", "Randevu", new { area = "Hekim" });
-
-        // Üye: ana sayfa (25.11'e kadar "Hayvanlarım" idi; "/" → Kliniğe gir → Giriş → Ana sayfa akışı)
-        return RedirectToAction("AnaSayfa", "Home");
-    }
+    // Girişten sonra herkes ana sayfaya: ana sayfa role göre kişisel özet gösterir (üye / hekim / admin).
+    // (25.11'e kadar hekim kendi paneline, admin yönetim paneline gidiyordu; artık oralara özetten bir tıkla gidilir.)
+    private Task<IActionResult> RoleGoreYonlendirAsync(string eposta) =>
+        Task.FromResult<IActionResult>(RedirectToAction("AnaSayfa", "Home"));
 
     // Identity hata kodlarını Türkçe mesaja çevirir.
     private static string IdentityHatasiniCevir(IdentityError hata) => hata.Code switch

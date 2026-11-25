@@ -1,0 +1,101 @@
+@*
+    HEKİM ÖZETİ (ana sayfa) — OzetServisi.HekimOzetiAsync
+    Sol: bugünün programı, açılıştan kapanışa dikey saat çizelgesi. Her randevu süresi kadar yükseklikte
+         bir blok; "şu an" çizgisi dakikada bir ilerler (betik AnaSayfa.cshtml'de).
+         Konum = (randevu başlangıcı − açılış) / (kapanış − açılış) → CSS top yüzdesi.
+    Sağ: sıradaki hasta, onay bekleyenler, panele kısayol.
+*@
+@model AnaSayfaVM
+@{
+    var o = Model.Hekim!;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var acilis = Model.BugunAcilis;
+    var kapanis = Model.BugunKapanis;
+    // Çizelge sınırları: klinik saatleri; randevu bunların dışına taşıyorsa sınır genişletilir
+    int acilisDk = acilis is null ? 9 * 60 : acilis.Value.Hour * 60 + acilis.Value.Minute;
+    int kapanisDk = kapanis is null ? 18 * 60 : kapanis.Value.Hour * 60 + kapanis.Value.Minute;
+    foreach (var r in o.BugunkuRandevular)
+    {
+        acilisDk = Math.Min(acilisDk, r.BaslangicZamani.Hour * 60 + r.BaslangicZamani.Minute);
+        kapanisDk = Math.Max(kapanisDk, r.BitisZamani.Hour * 60 + r.BitisZamani.Minute);
+    }
+    double Oran(int dk) => (dk - acilisDk) * 100.0 / (kapanisDk - acilisDk);
+    var s = o.SiradakiHasta;
+}
+
+<div class="ozet-izgara">
+    <div class="ozet-sol">
+        <section class="ozet-kart" style="--i:0" aria-labelledby="programBaslik">
+            <div class="kart-ust">
+                <h2 id="programBaslik" class="kart-etiket">Bugünün programı</h2>
+                <span class="kart-bilgi">@o.BugunkuRandevular.Count randevu</span>
+            </div>
+            @if (acilis is null && o.BugunkuRandevular.Count == 0)
+            {
+                <p class="text-body-secondary mb-0">Klinik bugün kapalı.</p>
+            }
+            else
+            {
+                <div class="gun-cizelgesi" id="gunCizelgesi" data-acilis="@acilisDk" data-kapanis="@kapanisDk">
+                    @* Saat çizgileri: her tam saat *@
+                    @for (var dk = (acilisDk + 59) / 60 * 60; dk <= kapanisDk; dk += 60)
+                    {
+                        <div class="saat-cizgisi" style="top:@Oran(dk).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"><span class="veri">@((dk / 60).ToString("00")):00</span></div>
+                    }
+                    @foreach (var r in o.BugunkuRandevular)
+                    {
+                        var bas = r.BaslangicZamani.Hour * 60 + r.BaslangicZamani.Minute;
+                        var bit = r.BitisZamani.Hour * 60 + r.BitisZamani.Minute;
+                        var ust = Oran(bas).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                        var boy = (Oran(bit) - Oran(bas)).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                        <a class="cizelge-randevu durum-@r.Durum.ToString().ToLowerInvariant()" data-bitis="@bit"
+                           style="top:@ust%; height:@boy%" asp-area="Hekim" asp-controller="Randevu" asp-action="Detay" asp-route-id="@r.Id">
+                            <time class="veri">@r.BaslangicZamani.ToString("HH:mm")</time>
+                            <span class="cr-ad">@r.EvcilHayvan?.Ad</span>
+                            <span class="cr-hizmet">@r.Hizmet?.Ad</span>
+                        </a>
+                    }
+                    @* Başta gizli; betik saat çizelge aralığındaysa gösterir. (hidden özniteliği değil: Bootstrap onu !important ile gizler) *@
+                    <div class="su-an" id="suAnCizgisi" style="display:none"><time class="veri"></time></div>
+                </div>
+                @if (o.BugunkuRandevular.Count == 0)
+                {
+                    <p class="text-body-secondary mt-3 mb-0">Bugün randevunuz yok.</p>
+                }
+            }
+        </section>
+    </div>
+
+    <div class="ozet-sag">
+        <section class="ozet-kart siradaki" style="--i:1" aria-labelledby="siradakiHastaBaslik">
+            <h2 id="siradakiHastaBaslik" class="kart-etiket">Sıradaki hasta</h2>
+            @if (s is null)
+            {
+                <p class="siradaki-bos mb-0">Bugün başka onaylı randevu yok.</p>
+            }
+            else
+            {
+                <p class="siradaki-ne">@s.EvcilHayvan?.Ad, @s.Hizmet?.Ad</p>
+                <p class="siradaki-kim">Saat <time class="veri">@s.BaslangicZamani.ToString("HH:mm")</time>, <span data-geri-sayim="@s.BaslangicZamani.ToString("yyyy-MM-ddTHH:mm")"></span> sonra.</p>
+                <a class="btn btn-koyu btn-sm" asp-area="Hekim" asp-controller="Randevu" asp-action="Detay" asp-route-id="@s.Id">Hasta ayrıntısı</a>
+            }
+        </section>
+
+        <section class="ozet-kart" style="--i:2" aria-labelledby="bekleyenBaslik">
+            <h2 id="bekleyenBaslik" class="kart-etiket">Onay bekleyen</h2>
+            <p class="buyuk-sayi veri">@o.OnayBekleyenSayisi</p>
+            @if (o.OnayBekleyenSayisi > 0)
+            {
+                <a class="btn btn-primary btn-sm" asp-area="Hekim" asp-controller="Randevu" asp-action="Index" asp-route-durum="Bekliyor">Onayla veya reddet</a>
+            }
+            else
+            {
+                <p class="text-body-secondary mb-0">Bekleyen randevu yok.</p>
+            }
+        </section>
+
+        <section class="ozet-kart" style="--i:3">
+            <a class="kart-tam-baglanti" asp-area="Hekim" asp-controller="Randevu" asp-action="Index">Tüm randevularım</a>
+        </section>
+    </div>
+</div>
