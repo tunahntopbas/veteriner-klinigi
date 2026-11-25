@@ -141,8 +141,9 @@ AI asistanı ──JSON-RPC─▶ MCP (/mcp) ────────┘     (i�
 | 14 | **Kod incelemesi düzeltmeleri:** (1) saati gelmemiş randevu "Tamamlandı" yapılamaz (yoksa yarınki randevuya bugünden muayene notu yazılıp ciroya girerdi); (2) saati geçmiş bekleyen randevu onaylanamaz, yalnızca reddedilir; (3) aynı hayvan için de kilit (`pg_advisory_xact_lock(1, hayvanId)`); (4) API'de başkasının hayvanıyla randevu → 404. 47 maddelik uç durum testi geçti | `Services/RandevuServisi.cs` (`DurumDegistirAsync`, `KilitleriAlAsync`), `Controllers/Api/RandevularApiController.cs` | `3c73a71`, `579ffa1` |
 | 15 | Hekim paneli ve muayene notu ekran görüntüleri yeni kurala uygun veriyle yeniden alındı (tamamlanan randevu artık geçmiş tarihli) | `docs/ekran-goruntuleri/09-*.png`, `10-*.png` | `aa587cd` |
 | 16 | 19.11: kalan takvim ve arayüz planı çıkarıldı (§5) | `docs/GELISTIRME_NOTLARI.md` | `c9ee040` |
-| 18 | 20.11: **3D giriş sahnesi + koyu cam tema.** "/" adresinde Three.js ile dönen Shiba Inu modeli, kaydırmayla yaklaşan cam randevu fişleri, 3 aşamalı anlatım ve "Kliniğe gir" kartı; WebGL yoksa veya "hareketi azalt" açıksa durağan görünüm. Tüm site koyu tema, seçici cam efekti. Ana sayfa `Home/AnaSayfa`'ya taşındı | `Views/Home/Index.cshtml`, `Views/Shared/_GirisLayout.cshtml`, `wwwroot/js/giris-sahnesi.js`, `wwwroot/css/giris-sahnesi.css`, `wwwroot/lib/three/`, `wwwroot/models/`, `wwwroot/images/`, `wwwroot/css/site.css` | (bu günün commit'leri) |
-| 17 | 20.11: **Arayüz 1. gün.** Tasarım dili (renk ve yazı token'ları, Bootstrap teması), yeni üst bar (aktif sayfa çizgisi, mobilde sağdan açılan menü), veritabanından çalışma saatleri gösteren alt bilgi, yeni ana sayfa (canlı boş saatler fişi, hizmet/ücret listesi, hekimler, randevu adımları, asistan örneği, çalışma saatleri), kütüphanesiz kaydırma animasyonu | `wwwroot/css/site.css`, `wwwroot/js/site.js`, `wwwroot/fonts/`, `Views/Shared/_Layout.cshtml`, `Views/Home/Index.cshtml`, `ViewModels/AnaSayfaVM.cs`, `HomeController.Index` | (bu günün commit'leri) |
+| 19 | 25.11: **Üye ekranları.** Hayvan kartı yenilendi: fotoğraf yoksa adın baş harfi, yaş (1 yaşından küçükse ay), kilo, "sıradaki aşı" satırı (30 gün kala safran). Hayvan detayında kimlik şeridi; aşı takvimi API'den gelen yapılan ve planlı dozları tek zaman çizelgesinde, araya "Bugün" çizgisi koyarak gösterir. Aşı kayıtları tablosu dar ekranda alt alta satırlara dönüşür. Kilo Türkçe ondalıkla (4,2 kg). Liste sorgusu aşı kayıtlarını da yükler | `Views/Shared/_HayvanKarti.cshtml`, `Views/EvcilHayvan/Index.cshtml`, `Views/EvcilHayvan/Detay.cshtml`, `Services/EvcilHayvanServisi.cs` (`ListeleAsync` → `Include(AsiKayitlari)`), `wwwroot/css/site.css` (§9 İç sayfalar) | (bu günün commit'i) |
+| 18 | 20.11: **3D giriş sahnesi + koyu cam tema.** "/" adresinde Three.js ile dönen Shiba Inu modeli, kaydırmayla yaklaşan cam randevu fişleri, 3 aşamalı anlatım ve "Kliniğe gir" kartı; WebGL yoksa veya "hareketi azalt" açıksa durağan görünüm. Tüm site koyu tema, seçici cam efekti. Ana sayfa `Home/AnaSayfa`'ya taşındı | `Views/Home/Index.cshtml`, `Views/Shared/_GirisLayout.cshtml`, `wwwroot/js/giris-sahnesi.js`, `wwwroot/css/giris-sahnesi.css`, `wwwroot/lib/three/`, `wwwroot/models/`, `wwwroot/images/`, `wwwroot/css/site.css` | `966f14c`, `b30465a`, `216c77c` |
+| 17 | 20.11: **Arayüz 1. gün.** Tasarım dili (renk ve yazı token'ları, Bootstrap teması), yeni üst bar (aktif sayfa çizgisi, mobilde sağdan açılan menü), veritabanından çalışma saatleri gösteren alt bilgi, yeni ana sayfa (canlı boş saatler fişi, hizmet/ücret listesi, hekimler, randevu adımları, asistan örneği, çalışma saatleri), kütüphanesiz kaydırma animasyonu | `wwwroot/css/site.css`, `wwwroot/js/site.js`, `wwwroot/fonts/`, `Views/Shared/_Layout.cshtml`, `Views/Home/Index.cshtml`, `ViewModels/AnaSayfaVM.cs`, `HomeController.Index` | `2453ee1`, `93d4770`, `f7a02a2` |
 
 **Arayüz tasarım kararları (20.11)**
 - *Fikir: "klinik randevu defteri".* Saat, tarih, süre ve ücretler eş genişlikli rakamlarla (JetBrains Mono) yazılır; alt alta hizalanır, defter gibi okunur.
@@ -308,6 +309,19 @@ gelir, aradaki çizgi dolar (`transition-delay`). Güvenlik ağları:
   "Kliniğe gir" kartı normal sayfa gibi alt alta görünür. Model yüklenemezse ya da JS hata verirse de aynı görünüme düşer.
   "Atla" ve "Kliniğe gir" sıradan bağlantılar olduğu için her durumda çalışır.
 
+**S: Hayvan detayındaki aşı zaman çizelgesi nasıl oluşuyor?**
+Sayfa açılınca jQuery `GET /api/evcil-hayvanlar/{id}/asilar` çağırır. API iki liste döner: `gecmis` (yapılan dozlar)
+ve `yaklasan` (sonraki doz tarihi bugün veya sonrası). JS ikisini tek diziye koyup tarihe göre sıralar; ISO tarih
+(`2026-12-07`) metin olarak karşılaştırıldığında da doğru sıralandığı için ek tarih kütüphanesi gerekmez. İlk planlı
+dozdan hemen önce "Bugün" satırı eklenir. 30 gün ve daha az kalan doz safran renkte. API'den gelen metin `guvenli()` ile
+HTML'den arındırılarak yazılır (XSS'e karşı). Aynı API'yi MCP'deki `asi_takvimi` aracı da kullanır, yani web ve yapay
+zekâ asistanı aynı kuralla çalışır.
+
+**S: Telefonda tablolar nasıl görünüyor?**
+Aşı kayıtları tablosu 576px'ten dar ekranda `.yigin-tablo` sınıfıyla satır satır bloklara dönüşür: başlık satırı
+gizlenir, her hücrenin etiketi HTML'deki `data-etiket` özniteliğinden CSS `::before { content: attr(data-etiket) }` ile
+yazılır. JS yok, yatay kaydırma yok.
+
 **S: Ana sayfadaki boş saatler nereden geliyor?**
 Sayfa açılınca jQuery `GET /api/veterinerler/uygun?hizmetId=1&tarih=...` çağırır (REST API'nin sitedeki bir tüketim yeri daha).
 Hangi gün gösterileceği sunucuda, veritabanındaki çalışma saatlerinden hesaplanır: bugün açıksa ve kapanışa muayene süresi kadar
@@ -341,7 +355,7 @@ SABİS'e yalnızca 3 satırlık .txt yüklenir: numara, ad soyad, depo adresi.
 Commit tarihleri değiştirilmez.
 
 **Sınırlar**
-- Bootstrap 5 + jQuery temel olarak kalır (ödevde teknoloji olarak istenmiş). Ek JS kütüphanesi eklenmez.
+- Bootstrap 5 + jQuery temel olarak kalır (ödevde teknoloji olarak istenmiş). Ek kütüphane yalnızca giriş sahnesinde: Three.js (20.11'de kullanıcıyla kararlaştırıldı).
 - Daha özenli görünüm ana sayfa ve üye ekranlarında olur. Admin ve hekim panelleri sade, okunaklı ve hızlı kalır.
 - Backend (servisler, API, MCP) bu aşamada değişmez; değişirse uç durum testleri yeniden çalıştırılır.
 
@@ -351,7 +365,7 @@ Commit tarihleri değiştirilmez.
 |---|---|---|
 | 1 | Tasarım dili: renkler, yazı tipleri, boşluklar, buton/kart stilleri; yeni ana sayfa | `wwwroot/css/site.css` CSS değişkenleri, `_Layout.cshtml` |
 | 2 | Ana sayfada kaydırınca beliren bölümler | `IntersectionObserver` + CSS geçişleri, kütüphanesiz; `prefers-reduced-motion` açıksa animasyon yok |
-| 3 | Üye ekranları: hayvan kartları, aşı takvimi görünümü | `_HayvanKarti`, `EvcilHayvan/Detay` |
+| 3 | Üye ekranları: hayvan kartları, aşı takvimi görünümü | `_HayvanKarti`, `EvcilHayvan/Detay` — **yapıldı (25.11)** |
 | 4 | Randevu alma akışı: adım adım seçim (hayvan → hizmet → tarih → hekim/saat), boş saat ızgarası | `Randevu/Form.cshtml`; API çağrısı aynı kalır |
 | 5 | Hekim paneli: günlük görünüm, tarih filtresi | `Areas/Hekim` |
 | 6 | Admin paneli ve grafikli hizmet raporu | Grafik `<canvas>` ile elle çizilir ya da basit CSS çubukları |

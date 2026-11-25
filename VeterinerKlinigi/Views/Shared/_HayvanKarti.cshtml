@@ -1,28 +1,65 @@
 @*
-    PARTIAL VIEW — evcil hayvan kartı. Veriyi kendisi getirmez; çağıran ne verirse onu gösterir.
-    Fotoğraf <img src="/EvcilHayvan/Fotograf/{id}"> ile YETKİ KONTROLLÜ action'dan gelir (wwwroot'tan değil).
+    PARTIAL VIEW — evcil hayvan kartı (Views/EvcilHayvan/Index.cshtml).
+    Veriyi kendisi getirmez; çağıran ne verirse onu gösterir.
+    - Fotoğraf <img src="/EvcilHayvan/Fotograf/{id}"> ile YETKİ KONTROLLÜ action'dan gelir (wwwroot'tan değil).
+    - Fotoğraf yoksa hayvanın adının baş harfi gösterilir (emoji yerine; her platformda aynı görünür).
+    - "Sıradaki aşı": AsiKayitlari yüklendiyse (EvcilHayvanServisi.ListeleAsync yükler) en yakın sonraki doz.
+    - Kartın tamamı tıklanır: başlıktaki bağlantı Bootstrap'in "stretched-link" sınıfıyla kartı kaplar.
 *@
 @model EvcilHayvan
 @{
-    var simge = Model.Tur switch { "Kedi" => "🐱", "Köpek" => "🐶", "Kuş" => "🐦", "Tavşan" => "🐰", "Hamster" => "🐹", "Sürüngen" => "🦎", _ => "🐾" };
-    var yas = DateTime.Today.Year - Model.DogumTarihi.Year - (DateOnly.FromDateTime(DateTime.Today) < Model.DogumTarihi.AddYears(DateTime.Today.Year - Model.DogumTarihi.Year) ? 1 : 0);
+    var TurkceKultur = new System.Globalization.CultureInfo("tr-TR");   // 4,2 kg (virgüllü)
+    var bugun = DateOnly.FromDateTime(DateTime.Today);
+
+    // Yaş: doğum günü bu yıl henüz gelmediyse bir eksik. 1 yaşından küçükse ay olarak yazılır.
+    var yil = bugun.Year - Model.DogumTarihi.Year - (bugun < Model.DogumTarihi.AddYears(bugun.Year - Model.DogumTarihi.Year) ? 1 : 0);
+    var ay = (bugun.Year - Model.DogumTarihi.Year) * 12 + bugun.Month - Model.DogumTarihi.Month - (bugun.Day < Model.DogumTarihi.Day ? 1 : 0);
+    var yasYazi = yil >= 1 ? $"{yil} yaş" : $"{Math.Max(ay, 0)} aylık";
+
+    var siradaki = Model.AsiKayitlari
+        .Where(a => a.SonrakiDozTarihi >= bugun)
+        .OrderBy(a => a.SonrakiDozTarihi)
+        .FirstOrDefault();
+    var kalanGun = siradaki is null ? 0 : siradaki.SonrakiDozTarihi!.Value.DayNumber - bugun.DayNumber;
 }
-<div class="card kart-golge h-100 hayvan-kart">
-    @if (Model.FotografDosyaAdi is not null)
-    {
-        <img src="@Url.Action("Fotograf", "EvcilHayvan", new { area = "", id = Model.Id })" alt="@Model.Ad fotoğrafı" loading="lazy" />
-    }
-    else
-    {
-        <div class="hayvan-foto-yok" aria-hidden="true">@simge</div>
-    }
-    <div class="card-body">
-        <h2 class="h5 mb-1">@Model.Ad</h2>
-        <p class="text-muted mb-2">@Model.Tur@(Model.Irk is null ? "" : " · " + Model.Irk) · @yas yaş@(Model.Kilo is null ? "" : $" · {Model.Kilo:0.##} kg")</p>
+<article class="hayvan-kart">
+    <div class="hayvan-gorsel">
+        @if (Model.FotografDosyaAdi is not null)
+        {
+            <img src="@Url.Action("Fotograf", "EvcilHayvan", new { area = "", id = Model.Id })" alt="@Model.Ad fotoğrafı" loading="lazy" />
+        }
+        else
+        {
+            <span class="hayvan-harf" aria-hidden="true">@Model.Ad[..1]</span>
+        }
+    </div>
+    <div class="hayvan-govde">
+        <h2 class="hayvan-ad">
+            <a asp-area="" asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@Model.Id" class="stretched-link">@Model.Ad</a>
+        </h2>
+        <p class="hayvan-tur">@Model.Tur@(Model.Irk is null ? "" : ", " + Model.Irk)</p>
+
+        <dl class="hayvan-olcu">
+            <div><dt>Yaş</dt><dd>@yasYazi</dd></div>
+            <div><dt>Kilo</dt><dd>@(Model.Kilo is null ? "—" : Model.Kilo.Value.ToString("0.##", TurkceKultur) + " kg")</dd></div>
+        </dl>
+
         @if (!User.IsInRole(Roller.Uye) && Model.Sahip is not null)
         {
-            <p class="small mb-2">Sahibi: @Model.Sahip.AdSoyad</p>
+            <p class="hayvan-sahip">Sahibi: @Model.Sahip.AdSoyad</p>
         }
-        <a asp-area="" asp-controller="EvcilHayvan" asp-action="Detay" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">Detay ve aşılar →</a>
+
+        @* 30 gün ve daha az kaldıysa safran (yaklaşıyor), değilse soluk *@
+        <p class="hayvan-asi @(siradaki is not null && kalanGun <= 30 ? "yakin" : "")">
+            @if (siradaki is null)
+            {
+                <span>Planlı aşı yok</span>
+            }
+            else
+            {
+                <span>Sıradaki aşı: @siradaki.AsiAdi</span>
+                <time datetime="@siradaki.SonrakiDozTarihi!.Value.ToString("yyyy-MM-dd")">@(kalanGun == 0 ? "bugün" : $"{kalanGun} gün")</time>
+            }
+        </p>
     </div>
-</div>
+</article>

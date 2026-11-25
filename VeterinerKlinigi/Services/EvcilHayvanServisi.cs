@@ -36,6 +36,7 @@ public class EvcilHayvanServisi : IEvcilHayvanServisi
         await _db.EvcilHayvanlar
             .ErisilebilirHayvanlar(kb)        // ← yetki filtresi
             .Include(h => h.Sahip)
+            .Include(h => h.AsiKayitlari)     // kartta "sıradaki aşı" satırı için
             .OrderBy(h => h.Ad)
             .AsNoTracking()
             .ToListAsync();

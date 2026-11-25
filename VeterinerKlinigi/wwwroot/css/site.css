@@ -253,12 +253,6 @@ table.kart-golge { border-collapse: separate; border-spacing: 0; overflow: hidde
 .ozet-kart { background: var(--yuzey); border: 1px solid var(--cizgi); border-left: 4px solid var(--adacayi); border-radius: var(--kose-orta); }
 .ozet-sayi { font-family: var(--yazi-baslik); font-size: 1.9rem; font-weight: 700; color: #fff; }
 
-/* Evcil hayvan kartı */
-.hayvan-kart img, .hayvan-foto { object-fit: cover; height: 180px; width: 100%; border-radius: var(--kose-buyuk) var(--kose-buyuk) 0 0; }
-.hayvan-foto-yok { height: 180px; display: flex; align-items: center; justify-content: center;
-                   font-size: 4rem; background: var(--adacayi-zemin); border-radius: var(--kose-buyuk) var(--kose-buyuk) 0 0; }
-.detay-kart .hayvan-kart { height: auto !important; }
-
 /* Randevu formu: boş saat düğmeleri — seçili saat safran */
 .saat-dugmesi { min-width: 4.5rem; font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; }
 .btn.saat-dugmesi.active { background: var(--safran); color: var(--safran-ustu); border-color: var(--safran); }
@@ -471,4 +465,131 @@ a.saat-cipi:hover { border-color: var(--safran); background: rgba(240, 178, 74, 
 }
 @media (prefers-reduced-motion: reduce) {
   .iskelet { animation: none; }
+}
+
+
+/* ------------------------------------------------------------------
+   9) İÇ SAYFALAR — üye, hekim ve admin ekranlarının ortak parçaları
+   Kart yalnızca gerçekten ayrı bir nesne olan şeylerde (bir hayvan).
+   Sayfa bölümleri "panel": düz koyu yüzey, cam DEĞİL (içinde form/tablo var).
+   ------------------------------------------------------------------ */
+
+/* Sayfa başlığı: solda başlık + kısa bilgi, sağda tek birincil eylem */
+.sayfa-basi { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: var(--b4); margin-bottom: var(--b8); }
+.sayfa-basi h1 { font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 700; letter-spacing: -0.025em; color: #fff; margin: 0; }
+.sayfa-alt { color: var(--soluk); margin: var(--b1) 0 0; }
+
+.geri-baglanti { display: inline-flex; align-items: center; gap: var(--b2); color: var(--soluk); text-decoration: none; font-size: .9rem; margin-bottom: var(--b4); }
+.geri-baglanti::before { content: ""; width: .5rem; height: .5rem; border-left: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+.geri-baglanti:hover { color: var(--metin); }
+
+.panel { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: var(--kose-buyuk); padding: var(--b6); margin-bottom: var(--b6); }
+.panel-baslik { display: flex; justify-content: space-between; align-items: center; gap: var(--b3); margin-bottom: var(--b4); }
+.panel-baslik h2 { font-size: 1.15rem; font-weight: 650; margin: 0; color: #fff; }
+.panel-not { margin: var(--b4) 0 0; font-size: .8rem; color: #7E948E; }
+.panel-not code { color: inherit; }
+.panel .table { --bs-table-bg: transparent; }
+
+/* Boş durum: ne yapılacağını söyler, tek eylem */
+.bos-durum { border: 1px dashed var(--cizgi-guclu); border-radius: var(--kose-buyuk); padding: var(--b12) var(--b6); text-align: center; }
+.bos-durum h2 { font-size: 1.3rem; color: #fff; }
+.bos-durum p { color: var(--soluk); max-width: 40ch; margin: 0 auto var(--b6); }
+
+/* ---- Evcil hayvan kartı (Views/Shared/_HayvanKarti.cshtml) ----
+   Fotoğraf üstte, altında ad (başlık yazı tipi) ve iki ölçü (mono rakam).
+   En altta "sıradaki aşı": 30 gün ve daha azsa safran nokta. */
+.hayvan-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr)); gap: var(--b6); }
+.hayvan-kart { position: relative; display: flex; flex-direction: column; background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: var(--kose-buyuk); overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
+.hayvan-kart:hover { border-color: var(--cizgi-guclu); transform: translateY(-2px); }
+.hayvan-kart:focus-within { outline: 2px solid var(--safran); outline-offset: 2px; }
+.hayvan-kart .stretched-link { color: inherit; text-decoration: none; }
+.hayvan-kart .stretched-link:focus { outline: none; }   /* odak çerçevesini kart çizer (focus-within) */
+
+.hayvan-gorsel { aspect-ratio: 16 / 10; background: radial-gradient(120% 90% at 30% 20%, rgba(111, 165, 146, .28), transparent 60%), var(--yuzey-2); display: grid; place-items: center; overflow: hidden; }
+.hayvan-gorsel img { width: 100%; height: 100%; object-fit: cover; }
+.hayvan-harf { font-family: var(--yazi-baslik); font-weight: 750; font-size: 5rem; line-height: 1; color: rgba(230, 239, 236, .82); letter-spacing: -0.05em; }
+
+.hayvan-govde { padding: var(--b4) var(--b6) var(--b6); display: flex; flex-direction: column; gap: var(--b2); flex: 1; }
+.hayvan-ad { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; color: #fff; }
+.hayvan-tur { color: var(--soluk); margin: 0; }
+.hayvan-sahip { font-size: .85rem; color: var(--soluk); margin: 0; }
+
+/* Ölçüler: etiket küçük ve soluk, değer mono */
+.hayvan-olcu { display: flex; flex-wrap: wrap; gap: var(--b2) var(--b6); margin: var(--b1) 0 0; }
+.hayvan-olcu dt { font-size: .75rem; font-weight: 500; color: #7E948E; }
+.hayvan-olcu dd { margin: 0; font-family: var(--yazi-veri); font-variant-numeric: tabular-nums; font-size: .95rem; color: var(--metin); }
+.hayvan-olcu dd.duz { font-family: var(--yazi-govde); }
+
+.hayvan-asi { margin: auto 0 0; padding-top: var(--b3); border-top: 1px solid var(--cizgi); display: flex; justify-content: space-between; gap: var(--b3); font-size: .88rem; color: var(--soluk); }
+.hayvan-asi time { color: var(--metin); white-space: nowrap; }
+.hayvan-asi.yakin span::before { content: ""; display: inline-block; width: .45rem; height: .45rem; border-radius: 50%; background: var(--safran); margin-right: var(--b2); vertical-align: .1em; }
+.hayvan-asi.yakin time { color: var(--safran); }
+
+/* ---- Hayvan detayı: üst kimlik şeridi ---- */
+.hayvan-ust { display: grid; grid-template-columns: auto 1fr auto; gap: var(--b6) var(--b8); align-items: center; margin-bottom: var(--b8); }
+.hayvan-gorsel.buyuk { width: 9.5rem; aspect-ratio: 1; border-radius: var(--kose-buyuk); border: 1px solid var(--cizgi); }
+.hayvan-gorsel.buyuk .hayvan-harf { font-size: 4.2rem; }
+.hayvan-kimlik h1 { font-size: clamp(2.2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: #fff; margin: 0 0 var(--b2); }
+.hayvan-kimlik .hayvan-olcu { margin-top: var(--b4); }
+.hayvan-eylem { display: flex; flex-wrap: wrap; gap: var(--b2); justify-content: flex-end; }
+@media (max-width: 767.98px) {
+  .hayvan-ust { grid-template-columns: auto 1fr; }
+  .hayvan-gorsel.buyuk { width: 6rem; }
+  .hayvan-gorsel.buyuk .hayvan-harf { font-size: 2.8rem; }
+  .hayvan-eylem { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* ---- Aşı zaman çizelgesi (Detay sayfası, API'den doldurulur) ----
+   Dikey çizgi + her doz için nokta. Yapılan dozlar dolu adaçayı, planlı dozlar boş halka,
+   30 gün içindeki planlı doz safran. "Bugün" geçmişi gelecekten ayırır. */
+.asi-cizelgesi { list-style: none; margin: 0; padding: 0 0 0 var(--b6); position: relative; }
+.asi-cizelgesi::before { content: ""; position: absolute; left: .4rem; top: .5rem; bottom: .5rem; width: 1px; background: var(--cizgi-guclu); }
+.cizelge-olay { position: relative; display: grid; grid-template-columns: 6.5rem 1fr auto; gap: var(--b3); align-items: baseline; padding: var(--b2) 0; }
+.cizelge-olay::before { content: ""; position: absolute; left: calc(-1 * var(--b6) + .4rem - .3rem); top: 1rem; width: .6rem; height: .6rem; border-radius: 50%; transform: translateY(-50%); }
+.cizelge-olay time { color: var(--soluk); font-size: .88rem; }
+.olay-ad { color: var(--metin); }
+.olay-durum { font-size: .82rem; color: var(--soluk); white-space: nowrap; }
+.cizelge-olay.yapildi::before { background: var(--adacayi); }
+.cizelge-olay.planli::before { background: var(--yuzey); border: 1.5px solid var(--soluk); }
+.cizelge-olay.planli .olay-ad { font-weight: 600; color: #fff; }
+.cizelge-olay.yakin::before { border-color: var(--safran); background: var(--safran); box-shadow: 0 0 0 4px rgba(240, 178, 74, .18); }
+.cizelge-olay.yakin .olay-durum { color: var(--safran); font-weight: 600; }
+.cizelge-bugun { position: relative; margin: var(--b2) 0; display: flex; align-items: center; gap: var(--b3); font-size: .75rem; font-weight: 600; color: var(--safran); }
+.cizelge-bugun::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(240, 178, 74, .5), transparent); }
+.cizelge-bugun::before { content: ""; position: absolute; left: calc(-1 * var(--b6) + .4rem - .2rem); width: .4rem; height: 1px; background: var(--safran); }
+.cizelge-bilgi { color: var(--soluk); padding: var(--b2) 0; }
+@media (max-width: 575.98px) {
+  .cizelge-olay { grid-template-columns: 1fr auto; }
+  .cizelge-olay time { grid-column: 1 / -1; }
+}
+
+/* ---- Yığın tablo: dar ekranda her satır alt alta bilgi bloğu olur ----
+   Başlık satırı gizlenir; her hücrenin etiketi data-etiket özniteliğinden ::before ile yazılır.
+   Böylece 390px ekranda tablo yana kaymaz. */
+@media (max-width: 575.98px) {
+  .yigin-tablo thead { display: none; }
+  .yigin-tablo, .yigin-tablo tbody, .yigin-tablo tr, .yigin-tablo td { display: block; width: 100%; }
+  .yigin-tablo tr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--b1) var(--b4); padding: var(--b3) 0; border-top: 1px solid var(--cizgi); }
+  .yigin-tablo tr:first-child { border-top: 0; }
+  .yigin-tablo td { border: 0; padding: 0; background: transparent; }
+  .yigin-tablo td[data-etiket]::before { content: attr(data-etiket); display: block; font-family: var(--yazi-govde); font-size: .72rem; color: #7E948E; }
+  .yigin-tablo td[data-etiket]:empty { display: none; }
+  .yigin-tablo .yigin-baslik { grid-column: 1 / -1; font-weight: 600; color: #fff; }
+  .yigin-tablo .yigin-eylem { grid-column: 1 / -1; text-align: left !important; margin-top: var(--b2); }
+}
+
+/* ---- Randevu satırları (Detay sayfası) ---- */
+.randevu-satirlari { list-style: none; margin: 0; padding: 0; }
+.randevu-satirlari li { display: grid; grid-template-columns: auto 1fr auto; gap: var(--b3); align-items: center; padding: var(--b3) 0; border-top: 1px solid var(--cizgi); }
+.randevu-satirlari li:first-child { border-top: 0; padding-top: 0; }
+.randevu-satirlari time { font-size: .85rem; color: var(--soluk); }
+.randevu-ne { display: flex; flex-direction: column; min-width: 0; }
+.randevu-ne small { color: var(--soluk); }
+@media (max-width: 575.98px) {
+  .randevu-satirlari li { grid-template-columns: 1fr auto; }
+  .randevu-satirlari time { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hayvan-kart, .hayvan-kart:hover { transition: none; transform: none; }
 }
