@@ -29,12 +29,26 @@ public class RandevuController : Controller
         _randevular = randevular;
     }
 
-    // GET /Hekim/Randevu?durum=Bekliyor
-    public async Task<IActionResult> Index(RandevuDurumu? durum)
+    // GET /Hekim/Randevu                     → BUGÜNÜN randevuları (günlük görünüm, saat sırasıyla)
+    // GET /Hekim/Randevu?tarih=2026-12-07      → o günün randevuları
+    // GET /Hekim/Randevu?tumu=true             → bütün tarihler (en yeni üstte)
+    // ?durum=Bekliyor her iki görünümle birlikte çalışır.
+    // Yetki filtresi serviste (yalnızca kendi randevuları); gün filtresi burada.
+    public async Task<IActionResult> Index(RandevuDurumu? durum, DateOnly? tarih, bool tumu = false)
     {
         ViewData["Title"] = "Hekim Paneli — Randevularım";
         ViewData["Durum"] = durum;
+        // Durum filtresi tek başına seçildiyse (ör. ana sayfadaki "Onayla veya reddet") tüm tarihler gösterilir
+        tumu = tumu || (durum is not null && tarih is null);
+        var gun = tarih ?? DateOnly.FromDateTime(DateTime.Today);
+        ViewData["Tarih"] = gun;
+        ViewData["Tumu"] = tumu;
+
         var liste = await _randevular.ListeleAsync(User.Bilgi(), durum);
+        if (!tumu)
+            liste = liste.Where(r => DateOnly.FromDateTime(r.BaslangicZamani) == gun)
+                         .OrderBy(r => r.BaslangicZamani)
+                         .ToList();
         return View(liste);
     }
 

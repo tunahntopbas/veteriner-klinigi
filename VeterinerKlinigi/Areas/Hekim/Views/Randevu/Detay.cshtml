@@ -17,12 +17,12 @@
                 @if (Model.Durum == RandevuDurumu.Bekliyor)
                 {
                     <form asp-action="Onayla" asp-route-id="@Model.Id" method="post" class="d-grid">
-                        <button type="submit" class="btn btn-success">✓ Onayla</button>
+                        <button type="submit" class="btn btn-success">Onayla</button>
                     </form>
                     <form asp-action="Reddet" method="post">
                         <input type="hidden" name="Id" value="@Model.Id" />
                         <textarea name="Neden" class="form-control mb-2" rows="2" maxlength="300" placeholder="Red nedeni (sahibe gösterilir)"></textarea>
-                        <button type="submit" class="btn btn-outline-danger w-100">✗ Reddet</button>
+                        <button type="submit" class="btn btn-outline-danger w-100">Reddet</button>
                     </form>
                 }
                 @if (Model.Durum == RandevuDurumu.Onaylandi)

@@ -4,14 +4,13 @@
     var secili = ViewData["Durum"] as RandevuDurumu?;
 }
 
-<h1 class="h3 mb-3">Tüm Randevular</h1>
-
-<div class="btn-group mb-3 flex-wrap" role="group" aria-label="Durum filtresi">
-    <a asp-action="Index" class="btn btn-outline-secondary @(secili is null ? "active" : "")">Hepsi</a>
-    @foreach (var d in Enum.GetValues<RandevuDurumu>())
-    {
-        <a asp-action="Index" asp-route-durum="@d" class="btn btn-outline-secondary @(secili == d ? "active" : "")">@RandevuServisi.DurumAdi(d)</a>
-    }
+<div class="sayfa-basi">
+    <div>
+        <h1>Tüm randevular</h1>
+        <p class="sayfa-alt">@Model.Count randevu@(secili is null ? "" : ", " + RandevuServisi.DurumAdi(secili.Value).ToLower(new System.Globalization.CultureInfo("tr-TR")))</p>
+    </div>
 </div>
+
+<partial name="_DurumFiltresi" model="(secili, (string?)null, false)" />
 
 <partial name="_RandevuTablosu" model="Model" />

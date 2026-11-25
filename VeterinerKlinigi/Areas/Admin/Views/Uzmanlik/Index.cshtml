@@ -1,27 +1,33 @@
+@* Uzmanlık alanları listesi. Dar ekranda .yigin-tablo ile bloklara dönüşür. *@
 @model List<Uzmanlik>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Uzmanlık Alanları</h1>
-    <a asp-action="Ekle" class="btn btn-primary">+ Yeni uzmanlık</a>
+<div class="sayfa-basi">
+    <div>
+        <h1>Uzmanlık alanları</h1>
+        <p class="sayfa-alt">Hekimlere atanır; hekimler sayfasında ve randevu adımlarında görünür.</p>
+    </div>
+    <a asp-action="Ekle" class="btn btn-primary">Yeni uzmanlık</a>
 </div>
 
-<table class="table table-hover kart-golge">
-    <thead><tr><th>Uzmanlık</th><th>Hekimler</th><th class="text-end">İşlemler</th></tr></thead>
-    <tbody>
-        @foreach (var u in Model)
-        {
-            <tr>
-                <td>@u.Ad</td>
-                <td>@(u.Veterinerler.Count == 0 ? "—" : string.Join(", ", u.Veterinerler.Select(v => v.AdSoyad)))</td>
-                <td class="text-end">
-                    <a asp-action="Duzenle" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
-                    @* Silme POST formuyla; onclick ile tarayıcı onay kutusu *@
-                    <form asp-action="Sil" asp-route-id="@u.Id" method="post" class="d-inline"
-                          onsubmit="return confirm('@u.Ad silinsin mi? Hekimlerden de kaldırılır.');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="panel p-0">
+    <table class="table mb-0 align-middle yigin-tablo randevu-tablosu">
+        <thead><tr><th>Uzmanlık</th><th>Hekimler</th><th class="text-end">İşlemler</th></tr></thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td class="yigin-baslik">@u.Ad</td>
+                    <td data-etiket="Hekimler">@(u.Veterinerler.Count == 0 ? "—" : string.Join(", ", u.Veterinerler.Select(v => v.AdSoyad)))</td>
+                    <td class="text-end text-nowrap yigin-eylem">
+                        <a asp-action="Duzenle" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                        @* Silme POST formuyla; onsubmit ile tarayıcı onay kutusu *@
+                        <form asp-action="Sil" asp-route-id="@u.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('@u.Ad silinsin mi? Hekimlerden de kaldırılır.');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

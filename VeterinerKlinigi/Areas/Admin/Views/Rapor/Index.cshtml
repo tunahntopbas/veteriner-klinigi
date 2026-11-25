@@ -4,15 +4,24 @@
     GET /api/raporlar/hizmet-ozeti?baslangic=...&bitis=... ucunu çağırır,
     gelen JSON (DTO listesi) ile tabloyu sayfa yenilenmeden çizer.
     Tarayıcı çerezi otomatik gönderdiği için Admin yetkisi API'de de geçerli.
+
+    GRAFİK (25.11, plan maddesi 6): aynı JSON'dan, kütüphanesiz yatay çubuklar. Her hizmet için iki çubuk:
+    randevu sayısı (adaçayı) ve ciro (safran). Çubuk genişliği = değer / en büyük değer (CSS --oran, 0–1).
+    Ek istek yok: tablo ve grafik aynı cevaptan çizilir.
 *@
 @{
     var bugun = DateTime.Today;
     var ayBasi = new DateTime(bugun.Year, bugun.Month, 1);
 }
 
-<h1 class="h3 mb-3">Hizmet Bazında Randevu ve Ciro Raporu</h1>
+<div class="sayfa-basi">
+    <div>
+        <h1>Hizmet raporu</h1>
+        <p class="sayfa-alt">Hizmet bazında randevu sayısı ve ciro</p>
+    </div>
+</div>
 
-<form id="raporFormu" class="row g-2 align-items-end mb-3">
+<form id="raporFormu" class="row g-2 align-items-end mb-4">
     <div class="col-sm-4 col-md-3">
         <label for="baslangic" class="form-label">Başlangıç</label>
         <input type="date" id="baslangic" class="form-control" value="@ayBasi.AddMonths(-1).ToString("yyyy-MM-dd")" required />
@@ -28,7 +37,15 @@
 
 <div id="raporHata" class="alert alert-danger d-none"></div>
 
-<table class="table kart-golge">
+<section class="panel" aria-labelledby="grafikBaslik">
+    <div class="panel-baslik">
+        <h2 id="grafikBaslik">Grafik</h2>
+        <div class="grafik-anahtar"><span class="anahtar sayi">Randevu</span><span class="anahtar ciro">Ciro</span></div>
+    </div>
+    <ol id="raporGrafigi" class="rapor-grafigi" aria-label="Hizmetlere göre randevu sayısı ve ciro"></ol>
+</section>
+
+<table class="table panel p-0">
     <thead>
         <tr><th>Hizmet</th><th class="text-end">Randevu sayısı</th><th class="text-end">Tamamlanan</th><th class="text-end">Ciro (TL)</th></tr>
     </thead>
@@ -45,6 +62,26 @@
         // Metni HTML'e güvenle yazmak için (XSS'e karşı): < > & karakterlerini kaçışlar.
         function guvenli(metin) { return $('<div>').text(metin).html(); }
         function tl(sayi) { return Number(sayi).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+        // Kütüphanesiz yatay çubuk grafik: genişlik CSS değişkeni --oran (0–1) ile verilir.
+        // Hizmetler ciroya, ciro eşitse randevu sayısına göre büyükten küçüğe sıralanır.
+        function grafikCiz(satirlar) {
+            var liste = $('#raporGrafigi').empty();
+            if (satirlar.length === 0) { liste.append('<li class="text-body-secondary">Bu aralıkta randevu yok.</li>'); return; }
+            var sirali = satirlar.slice().sort(function (a, b) { return b.ciro - a.ciro || b.randevuSayisi - a.randevuSayisi; });
+            var enCokSayi = Math.max.apply(null, sirali.map(function (s) { return s.randevuSayisi; })) || 1;
+            var enCokCiro = Math.max.apply(null, sirali.map(function (s) { return s.ciro; })) || 1;
+            $.each(sirali, function (i, s) {
+                liste.append(
+                    '<li style="--i:' + i + '">' +
+                        '<span class="rg-ad">' + guvenli(s.hizmetAdi) + '</span>' +
+                        '<span class="rg-cubuklar">' +
+                            '<span class="rg-satir"><span class="rg-cubuk sayi" style="--oran:' + (s.randevuSayisi / enCokSayi) + '"></span><span class="rg-deger">' + s.randevuSayisi + ' randevu</span></span>' +
+                            '<span class="rg-satir"><span class="rg-cubuk ciro" style="--oran:' + (s.ciro / enCokCiro) + '"></span><span class="rg-deger">' + tl(s.ciro) + ' TL</span></span>' +
+                        '</span>' +
+                    '</li>');
+            });
+        }
 
         $('#raporFormu').on('submit', function (e) {
             e.preventDefault();                       // formun sayfayı yenilemesini engelle
@@ -66,6 +103,7 @@
                     govde.append('<tr><td>' + guvenli(s.hizmetAdi) + '</td><td class="text-end">' + s.randevuSayisi +
                         '</td><td class="text-end">' + s.tamamlananSayisi + '</td><td class="text-end">' + tl(s.ciro) + '</td></tr>');
                 });
+                grafikCiz(satirlar);
                 $('#raporToplam').html('<tr><td>Toplam</td><td class="text-end">' + toplamSayi + '</td><td class="text-end">' +
                     toplamTamam + '</td><td class="text-end">' + tl(toplamCiro) + '</td></tr>');
             })

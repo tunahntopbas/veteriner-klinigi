@@ -6,7 +6,7 @@
         <dl class="row mb-0">
             <dt class="col-sm-4">Açıklama</dt><dd class="col-sm-8">@(Model.Aciklama ?? "—")</dd>
             <dt class="col-sm-4">Süre</dt><dd class="col-sm-8">@Model.SureDakika dakika</dd>
-            <dt class="col-sm-4">Ücret</dt><dd class="col-sm-8">@Model.Ucret.ToString("N2") TL</dd>
+            <dt class="col-sm-4">Ücret</dt><dd class="col-sm-8">@Model.Ucret.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) TL</dd>
             <dt class="col-sm-4">Durum</dt><dd class="col-sm-8">@(Model.Aktif ? "Aktif" : "Pasif")</dd>
             <dt class="col-sm-4">Veren hekimler</dt>
             <dd class="col-sm-8">@(Model.Veterinerler.Count == 0 ? "—" : string.Join(", ", Model.Veterinerler.Select(v => v.AdSoyad)))</dd>

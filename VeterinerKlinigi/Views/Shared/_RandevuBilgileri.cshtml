@@ -15,7 +15,7 @@
             <dt class="col-sm-4">Sahibi</dt><dd class="col-sm-8">@Model.EvcilHayvan?.Sahip?.AdSoyad</dd>
             <dt class="col-sm-4">Hizmet</dt><dd class="col-sm-8">@Model.Hizmet?.Ad</dd>
             <dt class="col-sm-4">Süre</dt><dd class="col-sm-8">@Model.SureDakika dakika</dd>
-            <dt class="col-sm-4">Ücret</dt><dd class="col-sm-8">@Model.Ucret.ToString("N2") TL</dd>
+            <dt class="col-sm-4">Ücret</dt><dd class="col-sm-8">@Model.Ucret.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) TL</dd>
             <dt class="col-sm-4">Hekim</dt><dd class="col-sm-8">@Model.Veteriner?.Unvan @Model.Veteriner?.AdSoyad</dd>
             <dt class="col-sm-4">Sahibin notu</dt><dd class="col-sm-8">@(Model.SahipNotu ?? "—")</dd>
             @if (Model.Durum == RandevuDurumu.Reddedildi)
@@ -32,7 +32,7 @@
 {
     @* ÖDEV 3.4 — Tamamlanan randevunun muayene notu *@
     <div class="card kart-golge mb-3 border-success">
-        <div class="card-header bg-success-subtle">🩺 Muayene notu <small class="text-muted">(@not.YazilmaZamani.ToString("dd.MM.yyyy HH:mm"))</small></div>
+        <div class="card-header">Muayene notu <small class="text-muted">(@not.YazilmaZamani.ToString("dd.MM.yyyy HH:mm"))</small></div>
         <div class="card-body">
             <dl class="row mb-0">
                 <dt class="col-sm-4">Teşhis</dt><dd class="col-sm-8">@(not.Teshis ?? "—")</dd>

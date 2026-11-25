@@ -1,17 +1,43 @@
-@* Hekimin KENDİ randevuları (servis sorgusu hekime göre filtreler). *@
+@*
+    HEKİM PANELİ — hekimin KENDİ randevuları (servis sorgusu hekime göre filtreler).
+    Varsayılan: BUGÜN (günlük görünüm). Üstte gün gezintisi (önceki / takvim / sonraki / bugün)
+    ve "Tüm tarihler"; altında durum filtresi. Filtreler adres çubuğunda (?tarih=..&durum=..)
+    olduğu için sayfa yenilenince ya da bağlantı paylaşılınca aynı görünüm gelir.
+*@
 @model List<Randevu>
 @{
     var secili = ViewData["Durum"] as RandevuDurumu?;
+    var gun = (DateOnly)ViewData["Tarih"]!;
+    var tumu = (bool)ViewData["Tumu"]!;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var bugun = DateOnly.FromDateTime(DateTime.Today);
+    string? tarihParam = tumu ? null : gun.ToString("yyyy-MM-dd");
 }
 
-<h1 class="h3 mb-3">Randevularım (Hekim)</h1>
-
-<div class="btn-group mb-3 flex-wrap" role="group" aria-label="Durum filtresi">
-    <a asp-action="Index" class="btn btn-outline-secondary @(secili is null ? "active" : "")">Hepsi</a>
-    @foreach (var d in Enum.GetValues<RandevuDurumu>())
-    {
-        <a asp-action="Index" asp-route-durum="@d" class="btn btn-outline-secondary @(secili == d ? "active" : "")">@RandevuServisi.DurumAdi(d)</a>
-    }
+<div class="sayfa-basi">
+    <div>
+        <h1>Randevularım</h1>
+        <p class="sayfa-alt">@(tumu ? "Bütün tarihler" : gun == bugun ? $"Bugün, {gun.ToString("d MMMM dddd", tr)}" : gun.ToString("d MMMM yyyy dddd", tr)), @Model.Count randevu</p>
+    </div>
 </div>
+
+@* ---- Gün gezintisi: GET formu (JS gerekmez) ---- *@
+<div class="gun-gezinti">
+    <a class="btn btn-koyu btn-sm" asp-action="Index" asp-route-tarih="@gun.AddDays(-1).ToString("yyyy-MM-dd")" asp-route-durum="@secili" aria-label="Önceki gün">Önceki</a>
+    <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center">
+        <label for="tarihSec" class="visually-hidden">Tarih</label>
+        <input id="tarihSec" type="date" name="tarih" value="@gun.ToString("yyyy-MM-dd")" class="form-control form-control-sm" onchange="this.form.submit()" />
+        @if (secili is not null) { <input type="hidden" name="durum" value="@secili" /> }
+        <noscript><button class="btn btn-koyu btn-sm">Göster</button></noscript>
+    </form>
+    <a class="btn btn-koyu btn-sm" asp-action="Index" asp-route-tarih="@gun.AddDays(1).ToString("yyyy-MM-dd")" asp-route-durum="@secili" aria-label="Sonraki gün">Sonraki</a>
+    @if (tumu || gun != bugun)
+    {
+        <a class="btn btn-link btn-sm" asp-action="Index" asp-route-durum="@secili" asp-route-tarih="@bugun.ToString("yyyy-MM-dd")">Bugün</a>
+    }
+    <a class="gun-gezinti-tumu @(tumu ? "aktif" : "")" asp-action="Index" asp-route-tumu="true" asp-route-durum="@secili">Tüm tarihler</a>
+</div>
+
+<partial name="_DurumFiltresi" model="(secili, tarihParam, tumu)" />
 
 <partial name="_RandevuTablosu" model="Model" />

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VeterinerKlinigi.Data;
 using VeterinerKlinigi.Models;
+using VeterinerKlinigi.Services;
+using VeterinerKlinigi.ViewModels;
 
 namespace VeterinerKlinigi.Areas.Admin.Controllers;
 
@@ -25,19 +27,20 @@ public class PanelController : Controller
     }
 
     // GET /Admin  veya  /Admin/Panel
-    public async Task<IActionResult> Index()
+    // 25.11: sayılar ve 7 günlük grafik ana sayfadaki admin özetiyle AYNI (OzetServisi + _AdminOzeti partial'ı);
+    // iki yerde ayrı hesaplanıp birbirini tutmayan sayılar olmasın.
+    public async Task<IActionResult> Index([FromServices] IOzetServisi ozet)
     {
-        ViewData["Title"] = "Admin Paneli";
-
-        // Özet sayılar — veri controller'da hazırlanır, görünüm sadece gösterir.
-        ViewData["HizmetSayisi"] = await _db.Hizmetler.CountAsync(h => h.Aktif);
-        ViewData["HekimSayisi"] = await _db.Veterinerler.CountAsync(v => v.Aktif);
+        ViewData["Title"] = "Yönetim Paneli";
         ViewData["HayvanSayisi"] = await _db.EvcilHayvanlar.CountAsync();
-        ViewData["BekleyenSayisi"] = await _db.Randevular.CountAsync(r => r.Durum == RandevuDurumu.Bekliyor);
-        var bugun = DateTime.Today;
-        ViewData["BugunSayisi"] = await _db.Randevular.CountAsync(r =>
-            r.BaslangicZamani >= bugun && r.BaslangicZamani < bugun.AddDays(1) && r.Durum == RandevuDurumu.Onaylandi);
-
-        return View();
+        ViewData["HizmetSayisi"] = await _db.Hizmetler.CountAsync(h => h.Aktif);
+        var model = new AnaSayfaVM
+        {
+            Selam = "Yönetim paneli",
+            KlinikDurumu = "",
+            KlinikAcik = false,
+            Admin = await ozet.AdminOzetiAsync()
+        };
+        return View(model);
     }
 }

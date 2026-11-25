@@ -1,6 +1,7 @@
-@* Giriş yapmış ama rolü bu sayfaya yetmeyen kullanıcı (ör. Üye → Admin paneli) buraya yönlenir. *@
-<div class="text-center py-5">
-    <h1 class="display-6">⛔ Erişim engellendi</h1>
-    <p class="lead">Bu sayfayı görüntüleme yetkiniz yok.</p>
+@* Giriş yapmış ama rolü bu sayfaya yetmeyen kullanıcı (ör. Üye → Admin paneli) buraya yönlenir (403). *@
+<div class="durum-sayfasi">
+    <p class="durum-kodu veri">403</p>
+    <h1>Erişim engellendi</h1>
+    <p>Bu sayfayı görüntüleme yetkiniz yok. Farklı bir hesapla girmeniz gerekiyorsa önce çıkış yapın.</p>
     <a class="btn btn-primary" asp-controller="Home" asp-action="AnaSayfa">Ana sayfaya dön</a>
 </div>

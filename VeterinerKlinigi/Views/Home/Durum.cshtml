@@ -1,15 +1,17 @@
 @* 404 / 400 gibi durumlarda gösterilen sayfa. Başkasının kaydına id ile erişmeye çalışan kullanıcı da bunu görür. *@
 @model int
 
-<div class="text-center py-5">
-    <h1 class="display-4">@Model</h1>
+<div class="durum-sayfasi">
+    <p class="durum-kodu veri">@Model</p>
     @if (Model == 404)
     {
-        <p class="lead">Aradığınız kayıt bulunamadı ya da bu kaydı görme yetkiniz yok.</p>
+        <h1>Sayfa bulunamadı</h1>
+        <p>Aradığınız kayıt bulunamadı ya da bu kaydı görme yetkiniz yok.</p>
     }
     else
     {
-        <p class="lead">İsteğiniz işlenemedi.</p>
+        <h1>İsteğiniz işlenemedi</h1>
+        <p>Bir sorun oluştu. Ana sayfadan devam edebilirsiniz.</p>
     }
     <a class="btn btn-primary" asp-area="" asp-controller="Home" asp-action="AnaSayfa">Ana sayfaya dön</a>
 </div>

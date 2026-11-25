@@ -3,7 +3,7 @@
 
 <h1 class="h3 mb-3">Hizmeti sil</h1>
 <div class="alert alert-warning">
-    <strong>@Model.Ad</strong> (@Model.SureDakika dk, @Model.Ucret.ToString("N2") TL) silinecek. Emin misiniz?
+    <strong>@Model.Ad</strong> (@Model.SureDakika dk, @Model.Ucret.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) TL) silinecek. Emin misiniz?
     <br /><small>Randevusu olan hizmet silinemez; o durumda düzenleyip "Pasif" yapın.</small>
 </div>
 <form asp-action="Sil" asp-route-id="@Model.Id" method="post">

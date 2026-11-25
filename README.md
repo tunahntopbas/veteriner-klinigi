@@ -48,8 +48,15 @@ Tek bir klinik ("Pati Veteriner Kliniği") için tasarlanmıştır.
 - Randevu **"Bekliyor"** durumunda oluşur; Admin veya ilgili hekim onaylar ya da reddeder.
 
 **Veteriner hekim tarafı**
-- Yalnızca **kendi randevularını** görür, onaylar / reddeder / tamamlar.
+- Yalnızca **kendi randevularını** görür; panel varsayılan olarak bugünü gösterir, önceki/sonraki güne geçilebilir
+  ya da tüm tarihler durum filtresiyle listelenebilir. Randevuları onaylar / reddeder / tamamlar.
 - Tamamlanan randevu için **muayene notu** (tanı, tedavi, öneriler) girer.
+
+**Giriş ve ana sayfa**
+- `/` adresi bir tanıtım sahnesidir; "Kliniğe gir" giriş sayfasını, "Üye ol" kayıt sayfasını açar.
+- Girişten sonra herkes **ana sayfaya** gelir. Ana sayfa liste sayfalarını tekrar etmez, role göre kişisel bir özettir:
+  üye sıradaki randevusunu, yaklaşan aşıları ve boş saatleri; hekim günün programını; admin günün sayılarını,
+  bu ayın cirosunu ve önümüzdeki 7 günün doluluğunu görür.
 
 **Ek olarak**
 - Uygulamanın verileri bir **REST API** ile dışarıya açılır (bkz. [Bölüm 6](#6-rest-api)).
@@ -239,19 +246,21 @@ erDiagram
 
 | | |
 |---|---|
-| **Ana sayfa** (klinik çalışma saatleri) | **Hekimler** (liste jQuery ile REST API'den geliyor) |
-| ![](docs/ekran-goruntuleri/01-ana-sayfa.png) | ![](docs/ekran-goruntuleri/02-hekimler-api.png) |
-| **Kayıt** (sunucu + istemci doğrulaması) | **Evcil hayvan ekleme** (fotoğraf yükleme) |
-| ![](docs/ekran-goruntuleri/03-kayit-dogrulama.png) | ![](docs/ekran-goruntuleri/04-hayvan-ekle-formu.png) |
-| **Hayvan detayı** (aşı takvimi REST API'den) | **Randevu alma** (uygun hekim/saat API'den) |
+| **Giriş sahnesi** (`/`, Three.js ile dönen köpek modeli) | **Kayıt** (sunucu + istemci doğrulaması) |
+| ![](docs/ekran-goruntuleri/18-giris-sahnesi.png) | ![](docs/ekran-goruntuleri/03-kayit-dogrulama.png) |
+| **Üye ana sayfası** (sıradaki randevu, aşılar, boş saatler API'den) | **Hekim ana sayfası** (günün programı) |
+| ![](docs/ekran-goruntuleri/01-ana-sayfa.png) | ![](docs/ekran-goruntuleri/19-hekim-ana-sayfa.png) |
+| **Hekimler** (liste jQuery ile REST API'den geliyor) | **Evcil hayvan ekleme** (fotoğraf yükleme) |
+| ![](docs/ekran-goruntuleri/02-hekimler-api.png) | ![](docs/ekran-goruntuleri/04-hayvan-ekle-formu.png) |
+| **Hayvan detayı** (aşı takvimi REST API'den) | **Randevu alma** (4 adım; uygun hekim/saat API'den) |
 | ![](docs/ekran-goruntuleri/05-hayvan-detay-asi-takvimi.png) | ![](docs/ekran-goruntuleri/06-randevu-al-uygun-saatler.png) |
 | **Randevu detayı** ("Bekliyor") | **Profil** (MCP erişim anahtarı) |
 | ![](docs/ekran-goruntuleri/07-randevu-detay-bekliyor.png) | ![](docs/ekran-goruntuleri/08-profil-mcp-anahtari.png) |
-| **Hekim paneli** (kendi randevuları) | **Muayene notu** |
+| **Hekim paneli** (günlük görünüm, tarih ve durum filtresi) | **Muayene notu** |
 | ![](docs/ekran-goruntuleri/09-hekim-paneli.png) | ![](docs/ekran-goruntuleri/10-hekim-muayene-notu.png) |
-| **Admin paneli** | **Hekim müsaitlik aralıkları** |
+| **Admin paneli** (bugünkü sayılar, aylık ciro, 7 günlük doluluk) | **Hekim müsaitlik aralıkları** |
 | ![](docs/ekran-goruntuleri/11-admin-paneli.png) | ![](docs/ekran-goruntuleri/12-admin-hekim-musaitlik.png) |
-| **Hizmet yönetimi** | **Hizmet raporu** (REST API'den) |
+| **Hizmet yönetimi** | **Hizmet raporu** (REST API'den, grafikli) |
 | ![](docs/ekran-goruntuleri/13-admin-hizmetler.png) | ![](docs/ekran-goruntuleri/14-admin-rapor-api.png) |
 | **Tüm randevular** (onay / red) | **REST API arayüzü** (Scalar, `/scalar`) |
 | ![](docs/ekran-goruntuleri/15-admin-randevular.png) | ![](docs/ekran-goruntuleri/16-scalar-rest-api.png) |

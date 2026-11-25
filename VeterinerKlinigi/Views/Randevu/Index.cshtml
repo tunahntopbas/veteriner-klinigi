@@ -1,8 +1,12 @@
+@* Üyenin randevuları (servis sorgusu yalnızca kendi hayvanlarının randevularını döner). *@
 @model List<Randevu>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Randevularım</h1>
-    <a asp-action="Olustur" class="btn btn-primary">+ Randevu al</a>
+<div class="sayfa-basi">
+    <div>
+        <h1>Randevularım</h1>
+        <p class="sayfa-alt">@Model.Count randevu</p>
+    </div>
+    <a asp-action="Olustur" class="btn btn-primary">Randevu al</a>
 </div>
 
 <partial name="_RandevuTablosu" model="Model" />

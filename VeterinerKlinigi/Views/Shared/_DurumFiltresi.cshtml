@@ -1,0 +1,15 @@
+@*
+    PARTIAL VIEW — randevu durum filtresi (Hekim ve Admin randevu listeleri).
+    Model: (seçili durum, tarih parametresi, tüm tarihler mi). Bağlantılar mevcut area/controller'a gider;
+    tarih ve "tüm tarihler" seçimi korunur.
+*@
+@model (RandevuDurumu? Secili, string? Tarih, bool Tumu)
+<nav class="filtre-cipleri" aria-label="Durum filtresi">
+    <a asp-action="Index" asp-route-tarih="@Model.Tarih" asp-route-tumu="@(Model.Tumu ? "true" : null)"
+       aria-current="@(Model.Secili is null ? "page" : null)">Hepsi</a>
+    @foreach (var d in Enum.GetValues<RandevuDurumu>())
+    {
+        <a asp-action="Index" asp-route-durum="@d" asp-route-tarih="@Model.Tarih" asp-route-tumu="@(Model.Tumu ? "true" : null)"
+           aria-current="@(Model.Secili == d ? "page" : null)">@RandevuServisi.DurumAdi(d)</a>
+    }
+</nav>
